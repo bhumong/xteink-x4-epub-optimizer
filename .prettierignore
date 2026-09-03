@@ -1,0 +1,7 @@
+# Vendored read-only reference. We never format upstream code, and scanning its
+# 63 MB of firmware HTML makes `npm run format` fail on files we do not own.
+crosspoint-reader/
+
+node_modules/
+dist/
+package-lock.json

@@ -1,0 +1,11 @@
+{
+	"name": "@xteink/server",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"main": "./src/index.ts",
+	"scripts": {
+		"dev": "node --watch --experimental-strip-types src/index.ts",
+		"start": "node --experimental-strip-types src/index.ts"
+	}
+}

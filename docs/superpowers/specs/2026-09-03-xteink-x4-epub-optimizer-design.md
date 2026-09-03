@@ -54,20 +54,21 @@ Out of scope:
 
 All of the following was read from the pinned submodule, not assumed. Implementations must not contradict it.
 
-| Fact | Source |
-|---|---|
-| X4 panel is 480x800 portrait; XTC pages are stored at that geometry | `lib/Xtc/Xtc/XtcTypes.h` (`DISPLAY_WIDTH`/`HEIGHT`) |
-| Device accepts `.epub` (2/3), `.xtc`, `.xtch`, `.txt`, `.bmp` natively | `README.md` |
-| Firmware only reads XTC; there is no XTC writer anywhere in `lib/Xtc` | `lib/Xtc/` (public API is `open`/`loadPage`/`read*` only) |
-| `XtcReaderActivity` blits each page pixel-by-pixel on every load | `src/activities/reader/XtcReaderActivity.cpp:144-288` |
-| Bitmap size derives from the page header's own w/h; `compression` is never read and no decode path exists | `lib/Xtc/Xtc/XtcParser.cpp:443-465`, `XtcError::DECOMPRESSION_ERROR` unreferenced |
-| Device skips any CSS file over 128 KB and refuses CSS parsing under 64 KB free heap | `lib/Epub/Epub.cpp:244-336` |
-| Grayscale AA is silently dropped without a full plane buffer plus 60 KB headroom | `src/activities/reader/EpubReaderActivity.cpp:1578-1620` |
-| Status bar can be drawn over XTC pages when `statusBarSpec().xtcMode` is Top or Bottom; default is hide | `src/CrossPointSettings.h:372`, `XtcReaderActivity.cpp:99-137` |
-| Reading progress is stored in `/.crosspoint/xtc_<hash>/progress.bin`, not written back into the file | `XtcReaderActivity.cpp:328-338` |
-| Cover and thumbnails are generated from page 0 at runtime | `lib/Xtc/Xtc.cpp:140-175` |
-| Simulator maps SD `/books/` to `./fs_/books/`, exposes firmware port 80 as `127.0.0.1:8080`, and captures scripted BMPs via `CROSSPOINT_SIM_SCREENSHOTS` | simulator `README.md`, `src/SimulatorLifecycle.cpp` |
-| Firmware ships its own in-browser "EPUB Optimizer" (ported from EPUB Optimizer Pro), readable as a reference implementation | `src/network/html/FilesPage.html:3804+`, `USER_GUIDE.md:144` |
+| Fact                                                                                                                                                                             | Source                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| X4 panel is 480x800 portrait; XTC pages are stored at that geometry                                                                                                              | `lib/Xtc/Xtc/XtcTypes.h` (`DISPLAY_WIDTH`/`HEIGHT`)                                                                              |
+| Device accepts `.epub` (2/3), `.xtc`, `.xtch`, `.txt`, `.bmp` natively                                                                                                           | `README.md`                                                                                                                      |
+| Firmware only reads XTC; there is no XTC writer anywhere in `lib/Xtc`                                                                                                            | `lib/Xtc/` (public API is `open`/`loadPage`/`read*` only)                                                                        |
+| `XtcReaderActivity` blits each page pixel-by-pixel on every load                                                                                                                 | `src/activities/reader/XtcReaderActivity.cpp:144-288`                                                                            |
+| Bitmap size derives from the page header's own w/h; `compression` is never read and no decode path exists                                                                        | `lib/Xtc/Xtc/XtcParser.cpp:443-465`, `XtcError::DECOMPRESSION_ERROR` unreferenced                                                |
+| Device skips any CSS file over 128 KB and refuses CSS parsing under 64 KB free heap                                                                                              | `lib/Epub/Epub.cpp:244-336`                                                                                                      |
+| Grayscale AA is silently dropped without a full plane buffer plus 60 KB headroom                                                                                                 | `src/activities/reader/EpubReaderActivity.cpp:1578-1620`                                                                         |
+| Status bar can be drawn over XTC pages when `statusBarSpec().xtcMode` is Top or Bottom; default is hide                                                                          | `src/CrossPointSettings.h:372`, `XtcReaderActivity.cpp:99-137`                                                                   |
+| Reading progress is stored in `/.crosspoint/xtc_<hash>/progress.bin`, not written back into the file                                                                             | `XtcReaderActivity.cpp:328-338`                                                                                                  |
+| Cover and thumbnails are generated from page 0 at runtime                                                                                                                        | `lib/Xtc/Xtc.cpp:140-175`                                                                                                        |
+| Simulator maps SD `/books/` to `./fs_/books/`, exposes firmware port 80 as `127.0.0.1:8080`, and captures scripted BMPs via `CROSSPOINT_SIM_SCREENSHOTS`                         | simulator `README.md`, `src/SimulatorLifecycle.cpp`                                                                              |
+| Firmware ships its own in-browser "EPUB Optimizer" (ported from EPUB Optimizer Pro), readable as a reference implementation                                                      | `src/network/html/FilesPage.html:3804+`, `USER_GUIDE.md:144`                                                                     |
+| The pinned simulator no longer rewrites tracked firmware sources; its `run_simulator.py` docstring still describes patches removed in `ce58486`, and both fixes are now upstream | simulator `run_simulator.py` at `c55f168b`; firmware `lib/Epub/Epub/BookMetadataCache.h:24`, `lib/GfxRenderer/GfxRenderer.h:186` |
 
 Consequence for the product: EPUB cleanup already exists on-device, but it runs inside a browser tab on an ESP32-class host with no memory headroom and no batch mode. Pre-rendering to XTC does not exist on-device at all, because writing XTC would mean the firmware doing work the browser can do better. That asymmetry is this project's value.
 
@@ -75,15 +76,15 @@ Consequence for the product: EPUB cleanup already exists on-device, but it runs 
 
 npm workspaces, five units. The DOM-free boundary between `packages/xtc` and everything else is the load-bearing design decision: it lets the hardest correctness problem (bit packing and offset arithmetic) be tested in plain Node with no browser.
 
-| Unit | Responsibility | DOM | Test target |
-|---|---|---|---|
-| `packages/xtc` | XTC/XTCH header, page table, chapter records, XTG/XTH bit-plane packing | no | node (Vitest) |
-| `packages/optimize` | per-resource transforms; href and OPF rewriting; report entries | yes (`DOMParser`) | browser |
-| `packages/pipeline` | stage orchestration, progress events, cancellation, export fork | yes | browser |
-| `apps/web` | Svelte 5 SPA: drop zone, mode selector, options, progress, page preview scrubber, download | yes | browser |
-| `apps/server` | Hono on `@hono/node-server`; serves built static assets only | no | one smoke test |
-| `fixtures/` | small hand-built EPUBs plus committed golden `.xtc` and reference BMPs | n/a | n/a |
-| `tools/sim/` | simulator setup, build, and golden-capture scripts | n/a | n/a |
+| Unit                | Responsibility                                                                             | DOM               | Test target    |
+| ------------------- | ------------------------------------------------------------------------------------------ | ----------------- | -------------- |
+| `packages/xtc`      | XTC/XTCH header, page table, chapter records, XTG/XTH bit-plane packing                    | no                | node (Vitest)  |
+| `packages/optimize` | per-resource transforms; href and OPF rewriting; report entries                            | yes (`DOMParser`) | browser        |
+| `packages/pipeline` | stage orchestration, progress events, cancellation, export fork                            | yes               | browser        |
+| `apps/web`          | Svelte 5 SPA: drop zone, mode selector, options, progress, page preview scrubber, download | yes               | browser        |
+| `apps/server`       | Hono on `@hono/node-server`; serves built static assets only                               | no                | one smoke test |
+| `fixtures/`         | small hand-built EPUBs plus committed golden `.xtc` and reference BMPs                     | n/a               | n/a            |
+| `tools/sim/`        | simulator setup, build, and golden-capture scripts                                         | n/a               | n/a            |
 
 Dependency direction is one-way: `apps/web` depends on `pipeline`, `optimize`, and `xtc`; `pipeline` depends on `optimize` and `xtc`; `xtc` depends on nothing. `apps/server` depends on no package and imports no app code.
 
@@ -124,16 +125,16 @@ Layout quality is Chromium's own, which is the point of this approach. If quanti
 
 Each transform is gated on a measured limit from Section 4, never on taste.
 
-| Rule | Trigger | Action |
-|---|---|---|
-| Image fit | any image wider than 480 or taller than 800 px | auto-crop white margins, downscale to fit, grayscale, re-encode JPEG at user quality |
-| Tall-image split | aspect ratio far beyond one page | split into page-sized parts with configurable overlap and handedness, mirroring the on-device state machine |
-| CSS budget | stylesheet over 128 KB | split and scope it, or inline per document; the device otherwise skips it silently |
-| Defensive CSS | every XHTML document | inject the firmware's own guard rules: `img,svg{max-width:100%}`, `overflow-wrap:break-word`, `table-layout:fixed`, `pre{white-space:pre-wrap}` |
-| Hyphenation | `xml:lang` resolvable | add `hyphens:auto` so long words stop overflowing |
-| Spine granularity | single document large enough to stall lazy layout under the device heap budget | split into smaller documents and update spine, TOC, and every internal href |
-| Filename | opt-in | rebuild as `Title - Author.epub` from metadata |
-| Integrity | always | `mimetype` first and `STORE`; no resource dropped while still referenced; OPF manifest, spine, NCX, and NAV rewritten to match every rename |
+| Rule              | Trigger                                                                        | Action                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Image fit         | any image wider than 480 or taller than 800 px                                 | auto-crop white margins, downscale to fit, grayscale, re-encode JPEG at user quality                                                            |
+| Tall-image split  | aspect ratio far beyond one page                                               | split into page-sized parts with configurable overlap and handedness, mirroring the on-device state machine                                     |
+| CSS budget        | stylesheet over 128 KB                                                         | split and scope it, or inline per document; the device otherwise skips it silently                                                              |
+| Defensive CSS     | every XHTML document                                                           | inject the firmware's own guard rules: `img,svg{max-width:100%}`, `overflow-wrap:break-word`, `table-layout:fixed`, `pre{white-space:pre-wrap}` |
+| Hyphenation       | `xml:lang` resolvable                                                          | add `hyphens:auto` so long words stop overflowing                                                                                               |
+| Spine granularity | single document large enough to stall lazy layout under the device heap budget | split into smaller documents and update spine, TOC, and every internal href                                                                     |
+| Filename          | opt-in                                                                         | rebuild as `Title - Author.epub` from metadata                                                                                                  |
+| Integrity         | always                                                                         | `mimetype` first and `STORE`; no resource dropped while still referenced; OPF manifest, spine, NCX, and NAV rewritten to match every rename     |
 
 ## 8. XTC writer contract
 
@@ -181,11 +182,11 @@ Rules the parser forces, each a silent corruption if broken:
 
 ### Size tradeoff, shown in the UI before conversion
 
-| Pages | `.xtc` | `.xtch` |
-|---|---|---|
-| 200 | 9.6 MB | 19.2 MB |
-| 400 | 19.2 MB | 38.4 MB |
-| 600 | 28.8 MB | 57.6 MB |
+| Pages | `.xtc`  | `.xtch` |
+| ----- | ------- | ------- |
+| 200   | 9.6 MB  | 19.2 MB |
+| 400   | 19.2 MB | 38.4 MB |
+| 600   | 28.8 MB | 57.6 MB |
 
 A 400-page EPUB is commonly 2-5 MB, so XTC output is larger than its source and cannot be compressed by us: shrinking it needs a format change the firmware would have to adopt, which we cannot make. What it buys is instant page turns and zero on-device layout. `.xtch` is therefore opt-in, and the estimate appears on the convert button's confirmation.
 
@@ -232,13 +233,13 @@ Report entries are exportable as text, matching the log affordance the firmware'
 
 ## 12. Phasing
 
-| Phase | Deliverable | Proves |
-|---|---|---|
-| 0 | workspaces, TS strict, lint/format, CI, `AGENTS.md`, Hono serves built SPA, simulator builds locally | repo is real and the oracle runs |
-| 1 | ingest, normalize, EPUB repack, report UI | useful output with no rasterizer |
-| 2 | `packages/xtc` with byte-exact and golden tests | we can emit bytes the parser accepts |
-| 3 | paginate, capture, quantize, Worker pack; `.xtc` then `.xtch` | end to end pre-render |
-| 4 | simulator golden-image oracle; tune 2x supersampling against it | output matches the device, not our assumptions |
+| Phase | Deliverable                                                                                          | Proves                                         |
+| ----- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| 0     | workspaces, TS strict, lint/format, CI, `AGENTS.md`, Hono serves built SPA, simulator builds locally | repo is real and the oracle runs               |
+| 1     | ingest, normalize, EPUB repack, report UI                                                            | useful output with no rasterizer               |
+| 2     | `packages/xtc` with byte-exact and golden tests                                                      | we can emit bytes the parser accepts           |
+| 3     | paginate, capture, quantize, Worker pack; `.xtc` then `.xtch`                                        | end to end pre-render                          |
+| 4     | simulator golden-image oracle; tune 2x supersampling against it                                      | output matches the device, not our assumptions |
 
 Phase 1 ships a working product on its own, which is why EPUB mode goes first despite XTC being the more interesting target.
 
@@ -270,11 +271,11 @@ Modified: none outside the above. Inside the submodules, only untracked ignored 
 
 ## 15. Risks
 
-| Risk | Mitigation |
-|---|---|
-| `foreignObject` drops or misrenders CSS we depend on | keep the supported CSS subset small and documented; golden-image test fails loudly rather than silently |
-| Quantized text too soft at 1 bit | 2x supersample, then paint text from `Range.getClientRects()` in the same page structure (Section 6) without changing layout |
-| Large books exhaust tab memory | one page in flight, `Blob` chunk accumulation, measured page caps, refuse before writing |
-| Upstream firmware changes the format | submodule HEAD pinned; `packages/xtc` tests are the tripwire; upgrades are a deliberate decision |
-| XTC output bigger than source surprises users | size estimate shown before conversion; `.xtch` opt-in |
-| Accidental commit inside a submodule | `tools/sim/guard.sh` runs in CI and pre-commit; `AGENTS.md` states the rule first |
+| Risk                                                 | Mitigation                                                                                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `foreignObject` drops or misrenders CSS we depend on | keep the supported CSS subset small and documented; golden-image test fails loudly rather than silently                      |
+| Quantized text too soft at 1 bit                     | 2x supersample, then paint text from `Range.getClientRects()` in the same page structure (Section 6) without changing layout |
+| Large books exhaust tab memory                       | one page in flight, `Blob` chunk accumulation, measured page caps, refuse before writing                                     |
+| Upstream firmware changes the format                 | submodule HEAD pinned; `packages/xtc` tests are the tripwire; upgrades are a deliberate decision                             |
+| XTC output bigger than source surprises users        | size estimate shown before conversion; `.xtch` opt-in                                                                        |
+| Accidental commit inside a submodule                 | `tools/sim/guard.sh` runs in CI and pre-commit; `AGENTS.md` states the rule first                                            |

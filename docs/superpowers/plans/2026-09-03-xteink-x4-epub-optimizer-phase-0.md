@@ -80,10 +80,12 @@ Dependency direction is one-way: `apps/web` imports `pipeline`, `optimize`; `app
 ### Task 0: First commit, so the guard has something to compare against
 
 **Files:**
+
 - Create: `docs/superpowers/specs/2026-09-03-xteink-x4-epub-optimizer-design.md` (already written and approved), `docs/superpowers/plans/2026-09-03-xteink-x4-epub-optimizer-phase-0.md` (this file)
 - Staged by the user already: `.gitmodules`, `crosspoint-reader/crosspoint-firmware`, `crosspoint-reader/crosspoint-simulator`
 
 **Interfaces:**
+
 - Consumes: the empty repo at `main` with `origin` set to `git@github.com:bhumong/xteink-x4-epub-optimizer`.
 - Produces: the first commit, which records the submodule gitlinks and thereby makes the superproject half of `tools/sim/guard.sh` meaningful. Until this exists, the guard prints `no commits yet; skipping gitlink checks` and only verifies submodule HEADs.
 
@@ -120,11 +122,13 @@ Pushing is a separate decision from committing. This plan never pushes; Tasks 1 
 ### Task 1: Workspace scaffold with a green build
 
 **Files:**
+
 - Create: `package.json`, `tsconfig.base.json`, `tsconfig.json`, `.npmrc`, `.editorconfig`, `.gitignore`, `prettier.config.js`, `eslint.config.js`, `vitest.config.ts`
 - Create: `packages/optimize/package.json`, `packages/optimize/src/paths.ts`, `packages/optimize/test/paths.node.test.ts`
 - Create: `packages/optimize/tsconfig.json`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `paths.ts` exports `opfDirectoryPath(opfPath: string): string`, `joinZipPath(baseDir: string, href: string): string`, `relativeZipPath(fromPath: string, toPath: string): string`, `decodeHref(href: string): string`, `fileExtension(path: string): string`. Task 5 consumes all five.
 
@@ -185,7 +189,12 @@ Pushing is a separate decision from committing. This plan never pushes; Tasks 1 
 ```json
 {
 	"extends": "./tsconfig.base.json",
-	"include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts", "apps/*/src/**/*.ts", "vitest.config.ts"],
+	"include": [
+		"packages/*/src/**/*.ts",
+		"packages/*/test/**/*.ts",
+		"apps/*/src/**/*.ts",
+		"vitest.config.ts"
+	],
 	"exclude": ["node_modules", "crosspoint-reader", "apps/web/dist", "apps/server/dist"]
 }
 ```
@@ -412,7 +421,9 @@ describe('relativeZipPath', () => {
 		expect(relativeZipPath('OEBPS/Text/ch1.xhtml', 'OEBPS/Text/style.css')).toBe('style.css');
 	});
 	it('handles a root target from a nested source', () => {
-		expect(relativeZipPath('OEBPS/Text/ch1.xhtml', 'Images/cover.jpg')).toBe('../../Images/cover.jpg');
+		expect(relativeZipPath('OEBPS/Text/ch1.xhtml', 'Images/cover.jpg')).toBe(
+			'../../Images/cover.jpg'
+		);
 	});
 });
 
@@ -486,7 +497,11 @@ export function relativeZipPath(fromPath: string, toPath: string): string {
 	const fromDirs = fromPath.split('/').slice(0, -1);
 	const toParts = toPath.split('/');
 	let common = 0;
-	while (common < fromDirs.length && common < toParts.length && fromDirs[common] === toParts[common]) {
+	while (
+		common < fromDirs.length &&
+		common < toParts.length &&
+		fromDirs[common] === toParts[common]
+	) {
 		common++;
 	}
 	const up: string[] = [];
@@ -531,10 +546,12 @@ git commit -m "chore: scaffold npm workspace with optimize package and vitest pr
 ### Task 2: Submodule guard
 
 **Files:**
+
 - Create: `tools/sim/pins.txt`, `tools/sim/guard.sh`, `tools/sim/test/guard_test.sh`
 - Modify: `package.json` (add `guard:test` script)
 
 **Interfaces:**
+
 - Consumes: git 2.53+ (available on host).
 - Produces: `bash tools/sim/guard.sh` exits 0 when the vendored submodules are untouched at the gitlink level, 1 otherwise. `bash tools/sim/test/guard_test.sh` prints `guard_test: PASS` and exits 0. Tasks 3 and 13 invoke the guard.
 
@@ -764,9 +781,11 @@ git commit -m "feat(tools): add submodule guard asserting pinned CrossPoint HEAD
 ### Task 3: AGENTS.md
 
 **Files:**
+
 - Create: `AGENTS.md`
 
 **Interfaces:**
+
 - Consumes: the scripts created by Tasks 1 and 2, and the `sim:*` scripts created by Task 4. Every command listed in `AGENTS.md` must exist by the end of this plan; add the Task 4 entries now and they become valid one task later.
 - Produces: the rule text that every later task and every agent session inherits.
 
@@ -819,7 +838,7 @@ Section 4 lists verified constraints with file and line references. Re-read the
 source before asserting anything about the format, and cite `path:line` when you
 do. Three that have already caused design changes:
 
-- The XTC reader only ever *reads* XTC. There is no writer in the firmware, and
+- The XTC reader only ever _reads_ XTC. There is no writer in the firmware, and
   the parser never decompresses page data, so `compression` must be 0 and pages
   are stored raw (48,000 bytes for a 480x800 1-bit page, 96,000 for 2-bit).
 - The device skips any CSS file larger than 128 KB and refuses CSS parsing with
@@ -829,22 +848,22 @@ do. Three that have already caused design changes:
 
 ## Verified commands
 
-| Task | Command |
-|------|---------|
-| Install everything | `npm install && npx playwright install chromium` |
-| All tests | `npm test` |
-| Node tests only (fast, no browser) | `npm run test:node` |
-| Browser tests only | `npm run test:browser` |
-| Typecheck | `npm run check` |
-| Lint | `npm run lint` |
-| Format check / write | `npm run format` / `npm run format:write` |
-| Submodule guard | `npm run guard` |
-| Guard self-test | `npm run guard:test` |
-| Prepare simulator build | `npm run sim:setup` |
-| Build simulator | `npm run sim:build` |
-| Run simulator window | `npm run sim:run` |
-| Dev app (Vite, port 5173) | `npm run dev -w apps/web` |
-| Serve built app (Hono, port 3000) | `npm run build -w apps/web && npm run dev -w apps/server` |
+| Task                               | Command                                                   |
+| ---------------------------------- | --------------------------------------------------------- |
+| Install everything                 | `npm install && npx playwright install chromium`          |
+| All tests                          | `npm test`                                                |
+| Node tests only (fast, no browser) | `npm run test:node`                                       |
+| Browser tests only                 | `npm run test:browser`                                    |
+| Typecheck                          | `npm run check`                                           |
+| Lint                               | `npm run lint`                                            |
+| Format check / write               | `npm run format` / `npm run format:write`                 |
+| Submodule guard                    | `npm run guard`                                           |
+| Guard self-test                    | `npm run guard:test`                                      |
+| Prepare simulator build            | `npm run sim:setup`                                       |
+| Build simulator                    | `npm run sim:build`                                       |
+| Run simulator window               | `npm run sim:run`                                         |
+| Dev app (Vite, port 5173)          | `npm run dev -w apps/web`                                 |
+| Serve built app (Hono, port 3000)  | `npm run build -w apps/web && npm run dev -w apps/server` |
 
 Requires: Node >= 24 (`engines` is strict via `.npmrc`). Simulator work also
 requires `pio`, `sdl2-config`, and OpenSSL headers: `sudo apt install
@@ -852,17 +871,17 @@ libsdl2-dev libssl-dev` and `pip install platformio`.
 
 ## Module map
 
-| Path | Owns | DOM? |
-|------|------|------|
-| `packages/optimize/src/paths.ts`, `decode.ts`, `css.ts`, `report.ts`, `errors.ts` | pure transforms and helpers | no |
-| `packages/optimize/src/ingest.ts`, `document.ts`, `images.ts`, `split.ts`, `toc.ts` | EPUB parse and rewrite | yes |
-| `packages/optimize/src/repack.ts` | OCF-correct zip writer | no |
-| `packages/optimize/src/pipeline.ts` | stage order, progress, cancellation | yes |
-| `packages/xtc/src/` | XTC/XTCH writer (Phase 2; does not exist yet) | no |
-| `apps/web/src/` | Svelte 5 SPA shell and UI | yes |
-| `apps/server/src/` | Hono static host; no book logic | no |
-| `tools/sim/` | simulator setup, guard, golden capture | n/a |
-| `crosspoint-reader/` | vendored firmware + simulator, read-only | n/a |
+| Path                                                                                | Owns                                          | DOM? |
+| ----------------------------------------------------------------------------------- | --------------------------------------------- | ---- |
+| `packages/optimize/src/paths.ts`, `decode.ts`, `css.ts`, `report.ts`, `errors.ts`   | pure transforms and helpers                   | no   |
+| `packages/optimize/src/ingest.ts`, `document.ts`, `images.ts`, `split.ts`, `toc.ts` | EPUB parse and rewrite                        | yes  |
+| `packages/optimize/src/repack.ts`                                                   | OCF-correct zip writer                        | no   |
+| `packages/optimize/src/pipeline.ts`                                                 | stage order, progress, cancellation           | yes  |
+| `packages/xtc/src/`                                                                 | XTC/XTCH writer (Phase 2; does not exist yet) | no   |
+| `apps/web/src/`                                                                     | Svelte 5 SPA shell and UI                     | yes  |
+| `apps/server/src/`                                                                  | Hono static host; no book logic               | no   |
+| `tools/sim/`                                                                        | simulator setup, guard, golden capture        | n/a  |
+| `crosspoint-reader/`                                                                | vendored firmware + simulator, read-only      | n/a  |
 
 Test files route by suffix: `*.node.test.ts` runs in the cheap node project,
 `*.browser.test.ts` runs in Chromium. A test with the wrong suffix silently
@@ -916,10 +935,12 @@ git commit -m "docs: add AGENTS.md with submodule, device, and browser-only rule
 ### Task 4: Simulator builds locally without touching tracked submodule files
 
 **Files:**
+
 - Create: `tools/sim/platformio.local.ini.tpl`, `tools/sim/setup.sh`, `tools/sim/run.sh`, `tools/sim/test/setup_test.sh`
 - Modify: `package.json` (add `sim:*` scripts)
 
 **Interfaces:**
+
 - Consumes: `npm run guard` from Task 2; the pinned submodules.
 - Produces: `.pio/build/simulator/program` inside the firmware submodule, runnable as a host binary with the firmware's own `lib/Epub` and `lib/Xtc` code. `npm run sim:setup` is idempotent.
 
@@ -1179,10 +1200,12 @@ Only `tools/sim` and `package.json` are added. The build artifacts inside the su
 ### Task 5: Svelte SPA shell served by Vite
 
 **Files:**
+
 - Create: `apps/web/package.json`, `apps/web/vite.config.ts`, `apps/web/index.html`, `apps/web/tsconfig.json`, `apps/web/src/main.ts`, `apps/web/src/App.svelte`, `apps/web/src/app.css`, `apps/web/src/lib/DropZone.svelte`, `apps/web/src/lib/FileButton.svelte`, `apps/web/src/lib/format.ts`, `apps/web/src/lib/format.browser.test.ts`
 - Modify: `package.json` (add `dev`, `build`, `check:web`), `vitest.config.ts` (add `web` project)
 
 **Interfaces:**
+
 - Consumes: `@xteink/optimize` barrel, for `fileExtension` to reject non-EPUB drops.
 - Produces: `apps/web/dist/`, the built SPA Task 6's Hono server serves. `format.ts` exports `formatBytes(n: number): string` and `baseName(path: string): string`.
 
@@ -1250,12 +1273,10 @@ export default defineConfig({
 </html>
 ```
 
-
 - [ ] **Step 2: Install the frontend toolchain**
 
 Run: `npm install -w apps/web -D @sveltejs/vite-plugin-svelte svelte vite svelte-check @types/node && npm install && npx playwright install chromium`
 Expected: exit 0, with versions resolved into `package-lock.json`. Do this before writing any test: the Vitest `web` project needs the Svelte plugin importable, and a red test is only useful if it fails on the assertion rather than on a missing toolchain.
-
 
 - [ ] **Step 3: Register the web test project**
 
@@ -1292,7 +1313,6 @@ Add to root `package.json` `scripts`:
 Run: `npx vitest run --project web`
 Expected: "No test files found", confirming the project is registered and the include pattern is live. That is the precondition for a meaningful red test next.
 
-
 - [ ] **Step 4: Write the failing format test**
 
 `apps/web/src/lib/format.browser.test.ts`:
@@ -1326,12 +1346,10 @@ describe('baseName', () => {
 });
 ```
 
-
 - [ ] **Step 5: Run it to verify it fails**
 
 Run: `npx vitest run --project web`
 Expected: FAIL, `./format.ts` not found.
-
 
 - [ ] **Step 6: Implement `format.ts`**
 
@@ -1353,7 +1371,6 @@ export function baseName(path: string): string {
 	return path.slice(path.lastIndexOf('/') + 1);
 }
 ```
-
 
 - [ ] **Step 7: Write the shell components**
 
@@ -1560,7 +1577,9 @@ body {
 	margin: 0;
 	background: var(--bg);
 	color: var(--ink);
-	font: 16px/1.5 system-ui, sans-serif;
+	font:
+		16px/1.5 system-ui,
+		sans-serif;
 }
 
 button {
@@ -1583,7 +1602,6 @@ export default mount(App, { target });
 
 The UI restraint is deliberate: a neutral paper-and-ink palette for an operational tool whose subject is black-on-white e-ink, with the drop target as the first screen and no marketing framing.
 
-
 - [ ] **Step 8: Build the SPA**
 
 Run: `npm run build -w apps/web`
@@ -1591,14 +1609,12 @@ Expected: `vite build` writes `apps/web/dist/index.html` plus hashed assets.
 
 If the browser project cannot resolve `.svelte` imports, the `svelte` plugin must also be added at the top level of `vitest.config.ts`; scope it to the project first and widen only if needed.
 
-
 - [ ] **Step 9: Verify in a real browser**
 
 Run: `npm run dev` then open `http://localhost:5173/`.
 Expected: header with the app name, a dashed drop zone containing "Drop an EPUB here" and a Choose file button. Pick a non-EPUB file and the alert text appears. Drag a real `.epub` and the panel shows its name and size.
 
 Also verify the built app at `npm run preview -w apps/web`, since a Vite-only code path that survives dev but breaks on build is the common failure here.
-
 
 - [ ] **Step 10: Commit**
 
@@ -1610,10 +1626,12 @@ git commit -m "feat(web): add Svelte 5 SPA shell with drop zone and file summary
 ### Task 6: Hono static host
 
 **Files:**
+
 - Create: `apps/server/package.json`, `apps/server/tsconfig.json`, `apps/server/src/index.ts`, `apps/server/test/server.node.test.ts`
 - Modify: `vitest.config.ts` (add server include to the node project), `package.json` (add `start` and `build` orchestration)
 
 **Interfaces:**
+
 - Consumes: `apps/web/dist/` from Task 5.
 - Produces: `createApp(root: string): Hono`, the same app the test drives and `npm start` serves on port 3000.
 
@@ -1737,9 +1755,13 @@ export function createApp(root: string) {
 	// a redeploy leaves users on a stale bundle referencing deleted chunks.
 	app.use(
 		'/assets/*',
-		serveStatic({ root, rewriteRequestPath: (p) => p.replace(/^\/assets\//, '/') , onFound: (_path, c) => {
-			c.header('Cache-Control', 'public, max-age=31536000, immutable');
-		} })
+		serveStatic({
+			root,
+			rewriteRequestPath: (p) => p.replace(/^\/assets\//, '/'),
+			onFound: (_path, c) => {
+				c.header('Cache-Control', 'public, max-age=31536000, immutable');
+			}
+		})
 	);
 	app.use(serveStatic({ root, index: undefined }));
 
@@ -1794,9 +1816,11 @@ git commit -m "feat(server): add Hono static host for the built SPA"
 ### Task 7: CI workflow
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 **Interfaces:**
+
 - Consumes: every root script from Tasks 1 through 6.
 - Produces: a push and PR gate that runs lint, typecheck, all three Vitest projects, the guard self-test, and the guard itself.
 
@@ -1891,3 +1915,45 @@ Checked against the spec after writing:
 - Every device-limit number in `AGENTS.md` traces to a spec Section 4 source citation.
 
 Only `tools/sim` and `package.json` are added. The build artifacts inside the submodule are never staged, and `guard` is what proves it.
+
+## Execution log
+
+Found while running this plan inline on 2026-09-03. Each item was verified by
+execution, not reasoning. The steps above still describe intent; where they
+disagree with this section, this section wins.
+
+| Finding                                                | Evidence                                                                                                                                                | Resolution                                                                                                                                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task 2 guard test was unrunnable as written            | Cases 1-4 passed a `--root` not containing the submodule path, so every case failed on the missing-checkout branch instead of the assertion under test  | Rewrote each case to build a synthetic superproject with an embedded repo at `sub`; all 7 cases pass                                                                                                                   |
+| Guard failed permanently on a fresh repo               | `git diff --cached` against an unborn HEAD reports every staged path, so both gitlinks looked staged before any commit existed                          | Guard skips gitlink checks when `HEAD` does not resolve, printing a note; added Task 0 to land the initial commit                                                                                                      |
+| Root typecheck could not resolve `paths.ts` imports    | `allowImportingTsExtensions: false` rejects `./paths.ts`, which the plan's own tests use                                                                | Set `allowImportingTsExtensions: true` in `tsconfig.base.json`                                                                                                                                                         |
+| `baseUrl` is an error in TypeScript 6                  | Installed `tsc` 6.0.3 fails with `TS5101`, then `TS5090` once dropped                                                                                   | Removed `baseUrl`; `paths` entries use explicit `./` prefixes                                                                                                                                                          |
+| Vitest alias broke subpath imports                     | String-key Vite aliases are prefix matches, so `@xteink/optimize/paths.ts` resolved to `.../src/index.ts/paths.ts` and the suite errored before running | Replaced with regex `find`/`replacement` pairs; 14 tests then passed                                                                                                                                                   |
+| Prettier could not parse `.svelte` at all              | `No parser could be inferred for file ...App.svelte`, so `npm run format` breaks as soon as a component is committed                                    | Added `prettier-plugin-svelte` plus a `*.svelte` parser override                                                                                                                                                       |
+| Prettier scanned 63 MB of vendored firmware            | `--check .` reports style warnings for `crosspoint-reader/**` files this project does not own                                                           | Added `.prettierignore` covering `crosspoint-reader/`                                                                                                                                                                  |
+| Prettier mangles `font:` shorthand                     | Rewrote `font: 16px/1.5 system-ui, sans-serif` across three lines                                                                                       | Used `font-family`, `font-size`, `line-height` longhand                                                                                                                                                                |
+| Drop zone failed Svelte's a11y rule                    | `a11y_no_static_element_interactions`: a `div` with drag handlers needs a role                                                                          | Added `role="presentation"`; build is now warning-free                                                                                                                                                                 |
+| Root tsconfig cannot cover `apps/web`                  | `tsc` cannot parse `.svelte` imports from `main.ts` and `DropZone.svelte`                                                                               | Root project covers `packages/*` and `apps/server`; `apps/web` is gated by `svelte-check`, which reports 0 errors and 0 warnings                                                                                       |
+| `startServer` promised but never defined               | Task 6 interface listed an export the implementation did not contain                                                                                    | Dropped it; `createApp` is the single export and `npm start` wires it to a port                                                                                                                                        |
+| Task 5 ordered a red test before its toolchain existed | `--project web` was registered in a later step, so the failing test failed on config, not assertion                                                     | Moved install and project registration ahead of the test-first steps                                                                                                                                                   |
+| Task 4 simulator build broke on GCC 15's C23 default   | PlatformIO native passed no C `-std`; GCC 15 compiled `qrcode.c` as C23, where the C89-style `bool`/`true`/`false` typedefs in QRCode become keywords   | Added `tools/sim/simulator_cflags.py` as a pre extra script appending `CFLAGS += -std=gnu17`; C++ keeps `-std=gnu++2a`. Pre runs before the native builder snapshots CFLAGS. Only our ignored simulator config changed |
+
+Verified toolchain actually used: Node 24.18, `tsc` 6.0.3, `vite` 8.2.0,
+`vitest` 4.1.10, `svelte` 5.56.8, `@sveltejs/vite-plugin-svelte` 7.2.0. The
+`typescript@^5` and `vite@^6` hints in Task 1 and Task 5 are superseded by
+whatever `npm install` resolves; per the global constraints, no ranges are
+hand-written.
+
+Still unverified, blocked on the approval reviewer (`No enabled OpenAI provider
+for model: gpt-5.6-luna`) and on `.git` being read-only in the agent sandbox:
+
+- `npm install` and therefore `hono`, `@hono/node-server`, and `jszip`. The
+  server suite and the `@hono`-importing source cannot typecheck or run until
+  those resolve, so Task 6 Steps 3 through 6 remain open.
+- Browser Vitest projects. Config loads and starts a server, then fails with
+  `EPERM: listen 127.0.0.1:63315`, which is the sandbox forbinding sockets. Run
+  `npm run test:browser` and the `web` project outside it.
+- Tasks 4 Steps 6 through 10. No `pio`, no `sdl2-config`, no nested
+  `freeink-sdk` checkout, and apt plus network are required. `setup.sh` reports
+  this honestly with exit 3 rather than half-configuring the tree.
+- Every commit step in this plan.

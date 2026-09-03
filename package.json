@@ -1,0 +1,31 @@
+{
+	"name": "xteink-x4-epub-optimizer",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"workspaces": [
+		"packages/*",
+		"apps/*"
+	],
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"dev": "npm run dev -w apps/web",
+		"build": "npm run build -w apps/web",
+		"start": "npm run start -w apps/server",
+		"check": "tsc --noEmit -p tsconfig.json",
+		"check:web": "npm run check -w apps/web",
+		"lint": "eslint .",
+		"format": "prettier --check .",
+		"format:write": "prettier --write .",
+		"test": "vitest run",
+		"test:node": "vitest run --project node",
+		"test:browser": "vitest run --project browser",
+		"guard": "bash tools/sim/guard.sh",
+		"guard:test": "bash tools/sim/test/guard_test.sh",
+		"sim:setup": "bash tools/sim/setup.sh",
+		"sim:build": "bash tools/sim/run.sh build",
+		"sim:run": "bash tools/sim/run.sh run"
+	}
+}

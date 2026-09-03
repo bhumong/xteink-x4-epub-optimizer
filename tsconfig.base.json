@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES2023",
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"noImplicitOverride": true,
+		"verbatimModuleSyntax": true,
+		"isolatedModules": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"allowImportingTsExtensions": true,
+		"forceConsistentCasingInFileNames": true,
+		"noEmit": true,
+		"paths": {
+			"@xteink/optimize": ["./packages/optimize/src/index.ts"],
+			"@xteink/optimize/*": ["./packages/optimize/src/*"]
+		}
+	}
+}

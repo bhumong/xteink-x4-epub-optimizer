@@ -1,0 +1,5 @@
+# Pinned vendored submodule SHAs. The guard fails if either HEAD moves or
+# either gitlink is staged in the superproject. Update deliberately, never as
+# a side effect of a build.
+crosspoint-reader/crosspoint-firmware badfa95ff747a0cbd07cf23186382a43ca9852e9
+crosspoint-reader/crosspoint-simulator c55f168bc0e677fdb32312c8be4b5874469465e6

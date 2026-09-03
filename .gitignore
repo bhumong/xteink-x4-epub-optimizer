@@ -1,0 +1,25 @@
+node_modules/
+dist/
+apps/web/dist/
+apps/server/dist/
+*.tsbuildinfo
+
+# Simulator build state. All of these live inside submodules that already
+# ignore them; listed here so an accidental stray copy is never committed.
+crosspoint-reader/**/.pio/
+crosspoint-reader/**/fs_/
+crosspoint-reader/**/platformio.local.ini
+
+# Local QA artifacts
+.qa/
+*.log
+
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+*.pyc
+.venv/
+venv/
+__pycache__/

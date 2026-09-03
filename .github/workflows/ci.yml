@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Submodules are needed so the guard can compare checked-out HEADs
+          # against tools/sim/pins.txt. Recursive so the firmware's nested
+          # freeink-sdk pin is also materialized.
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run format
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run check:web
+      - run: npm test
+      - run: npm run guard:test
+      - run: npm run guard
