@@ -1,0 +1,6 @@
+[submodule "crosspoint-reader/crosspoint-firmware"]
+	path = crosspoint-reader/crosspoint-firmware
+	url = https://github.com/crosspoint-reader/crosspoint-reader.git
+[submodule "crosspoint-reader/crosspoint-simulator"]
+	path = crosspoint-reader/crosspoint-simulator
+	url = https://github.com/crosspoint-reader/crosspoint-simulator.git
