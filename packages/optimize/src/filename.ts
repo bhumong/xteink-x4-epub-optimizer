@@ -9,6 +9,7 @@ export function safeEpubFilename(
 	const clean = (value: string) =>
 		value
 			.normalize('NFC')
+			// eslint-disable-next-line no-control-regex -- stripping ASCII controls is the point
 			.replace(/[\u0000-\u001f<>:"/\\|?*]/g, ' ')
 			.replace(/\s+/g, ' ')
 			.trim()
