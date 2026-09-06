@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { writeXtc } from '../src/index.ts';
-import { packXtg } from '../src/planes.ts';
-import { XtcWriteError, type XtcBook, type XtcWriteErrorCode } from '../src/types.ts';
+import { writeXtc, writeXtcFromBitmaps } from '../src/index.ts';
+import { packXtg, packXth } from '../src/planes.ts';
+import {
+	XtcWriteError,
+	type XtcBitmapBook,
+	type XtcBitmapPage,
+	type XtcBook,
+	type XtcWriteErrorCode
+} from '../src/types.ts';
 import { minimalXtcBook, minimalXtchBook, onePageXtcBook } from './book.ts';
 import { borderFrame, bytesEqual, makeFrame, pageFrame, whiteFrame } from './frame.ts';
 
@@ -227,5 +233,65 @@ describe('writeXtc validation', () => {
 				}),
 			'invalid-text'
 		);
+	});
+});
+
+function packedPages(book: XtcBook): XtcBitmapPage[] {
+	const width = 480;
+	const height = 800;
+	return book.pages.map((page) => ({
+		bitmap:
+			book.mode === 'xtc'
+				? packXtg(page.pixels, width, height)
+				: packXth(page.pixels, width, height)
+	}));
+}
+
+describe('writeXtcFromBitmaps', () => {
+	it('is byte-identical to writeXtc for the minimal XTC book', () => {
+		const book = minimalXtcBook();
+		const bitmapBook: XtcBitmapBook = {
+			mode: book.mode,
+			title: book.title,
+			author: book.author,
+			chapters: book.chapters,
+			pages: packedPages(book)
+		};
+		expect(bytesEqual(writeXtcFromBitmaps(bitmapBook), writeXtc(book))).toBe(true);
+	});
+
+	it('is byte-identical for the minimal XTCH book', () => {
+		const book = minimalXtchBook();
+		const bitmapBook: XtcBitmapBook = {
+			mode: book.mode,
+			title: book.title,
+			chapters: book.chapters,
+			pages: packedPages(book)
+		};
+		expect(bytesEqual(writeXtcFromBitmaps(bitmapBook), writeXtc(book))).toBe(true);
+	});
+
+	it('rejects a bitmap of the wrong length', () => {
+		expectCode(
+			() =>
+				writeXtcFromBitmaps({
+					mode: 'xtc',
+					pages: [{ bitmap: new Uint8Array(10) }]
+				}),
+			'pixels-length-mismatch'
+		);
+	});
+
+	it('rejects invalid chapters and empty books like writeXtc', () => {
+		expectCode(
+			() =>
+				writeXtcFromBitmaps({
+					mode: 'xtc',
+					chapters: [{ name: 'X', startPage: 2, endPage: 2 }],
+					pages: [{ bitmap: new Uint8Array(48000) }, { bitmap: new Uint8Array(48000) }]
+				}),
+			'chapter-out-of-bounds'
+		);
+		expectCode(() => writeXtcFromBitmaps({ mode: 'xtc', pages: [] }), 'empty-book');
 	});
 });

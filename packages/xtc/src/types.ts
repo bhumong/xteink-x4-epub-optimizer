@@ -66,3 +66,15 @@ export const XTC_PIXEL_MAX: Record<XtcMode, number> = {
 	xtc: 1,
 	xtch: 3
 };
+
+export interface XtcBitmapPage {
+	bitmap: Uint8Array; // device-order packed bytes
+}
+
+export interface XtcBitmapBook {
+	mode: XtcMode;
+	title?: string;
+	author?: string;
+	chapters?: XtcChapter[];
+	pages: XtcBitmapPage[];
+}
