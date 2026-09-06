@@ -11,6 +11,7 @@ import type {
 	OptimizeCallbacks,
 	OptimizeOptions,
 	OptimizeResult,
+	PreparedEpub,
 	ReportEntry
 } from './types.ts';
 
@@ -67,12 +68,12 @@ async function processImages(
 	return { resources, imageRenameMap };
 }
 
-export async function optimizeEpub(
+export async function prepareEpub(
 	file: File,
 	optionsInput: OptimizeOptions,
 	callbacks: OptimizeCallbacks,
 	signal?: AbortSignal
-): Promise<OptimizeResult> {
+): Promise<PreparedEpub> {
 	throwIfAborted(signal);
 	const options = { ...DEFAULT_OPTIONS, ...optionsInput };
 	callbacks.onProgress({ percent: 2, stage: 'read', message: 'Reading EPUB' });
@@ -167,6 +168,20 @@ export async function optimizeEpub(
 		);
 		resources.set(source.opfPath, new TextEncoder().encode(opfText));
 	}
+
+	return { source, resources, entries, sourceBytes, imageRenameMap };
+}
+
+export async function optimizeEpub(
+	file: File,
+	optionsInput: OptimizeOptions,
+	callbacks: OptimizeCallbacks,
+	signal?: AbortSignal
+): Promise<OptimizeResult> {
+	throwIfAborted(signal);
+	const options = { ...DEFAULT_OPTIONS, ...optionsInput };
+	const prepared = await prepareEpub(file, options, callbacks, signal);
+	const { resources, entries, sourceBytes, source } = prepared;
 
 	callbacks.onProgress({ percent: 88, stage: 'pack', message: 'Packing EPUB' });
 	const blob = await repackEpub(resources, signal);

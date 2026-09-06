@@ -35,6 +35,14 @@ export interface EpubSource {
 	metadata: Metadata;
 }
 
+export interface PreparedEpub {
+	source: EpubSource;
+	resources: Map<string, Uint8Array>;
+	entries: ReportEntry[];
+	sourceBytes: number;
+	imageRenameMap: Map<string, string>;
+}
+
 export type ReportLevel = 'info' | 'success' | 'warning' | 'error';
 
 export interface ReportEntry {
