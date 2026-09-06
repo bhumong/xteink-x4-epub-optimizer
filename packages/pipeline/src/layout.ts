@@ -168,7 +168,7 @@ export function measureColumnCount(fragment: string, estimate: number): number {
 export function columnSource(fragment: string, column: number, totalColumns: number): string {
 	const width = totalColumns * PAGE_WIDTH;
 	return `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${PAGE_WIDTH}px;height:${PAGE_HEIGHT}px;overflow:hidden;background:#fff">
-		<div style="width:${width}px;height:${PAGE_HEIGHT}px;transform:translateX(-${column * PAGE_WIDTH}px);transform-origin:0 0">
+		<div style="width:${width}px;height:${PAGE_HEIGHT}px;column-width:${PAGE_WIDTH}px;column-gap:0px;transform:translateX(-${column * PAGE_WIDTH}px);transform-origin:0 0">
 		${fragment}
 		</div>
 	</div>`;
