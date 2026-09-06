@@ -17,7 +17,9 @@
 			"@xteink/optimize": ["./packages/optimize/src/index.ts"],
 			"@xteink/optimize/*": ["./packages/optimize/src/*"],
 			"@xteink/xtc": ["./packages/xtc/src/index.ts"],
-			"@xteink/xtc/*": ["./packages/xtc/src/*"]
+			"@xteink/xtc/*": ["./packages/xtc/src/*"],
+			"@xteink/pipeline": ["./packages/pipeline/src/index.ts"],
+			"@xteink/pipeline/*": ["./packages/pipeline/src/*"]
 		}
 	}
 }
