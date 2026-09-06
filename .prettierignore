@@ -5,3 +5,6 @@ crosspoint-reader/
 node_modules/
 dist/
 package-lock.json
+
+# Committed binary EPUB fixtures; there is no parser for .epub.
+fixtures/epubs/
