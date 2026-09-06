@@ -19,8 +19,10 @@ export function createApp(root: string) {
 		'/assets/*',
 		serveStatic({
 			root,
-			rewriteRequestPath: (p) => p.replace(/^\/assets\//, '/'),
-			onFound: (_path, c) => c.header('Cache-Control', 'public, max-age=31536000, immutable')
+			// serveStatic() returns its Response directly, so context headers
+			// added afterward are dropped; mutate the response object instead.
+			onFound: (_path, c) =>
+				c.res?.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
 		})
 	);
 	app.use(serveStatic({ root, index: undefined }));
