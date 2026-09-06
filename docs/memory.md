@@ -91,7 +91,3 @@ Output is download-only. The app never uploads to the device, uses WebUSB, or ta
 - The sandbox has `.git` read-only, so git writes require user-side commits or a configured approval provider.
 - Simulator binary was not present in `.pio/build/simulator/` as of the last inspection.
 - Root contains accidental PlatformIO placeholder dirs (`include/`, `lib/`, empty `src/`, `test/`) pending cleanup confirmation.
-
-## Next Action
-
-Execute `docs/superpowers/plans/2026-09-06-xteink-x4-epub-optimizer-phase-1.md` task by task, starting with installing the real toolchain and completing the runnable scaffold.
