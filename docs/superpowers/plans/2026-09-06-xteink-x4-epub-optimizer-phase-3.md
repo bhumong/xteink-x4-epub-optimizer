@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship browser pre-rendering: a hidden 480x800 Chromium paginator, 2x `foreignObject` page capture with downsampling, deterministic quantization to device codes in a Worker, and downloadable `.xtc`/`.xtch` containers through the XTC-mode UI.
+**Goal:** Ship browser pre-rendering: a hidden 480x800 Chromium paginator, 2x page capture painted from the live DOM (no `foreignObject`), deterministic quantization to device codes in a Worker, and downloadable `.xtc`/`.xtch` containers through the XTC-mode UI.
 
 **Architecture:** New `packages/pipeline` owns layout/capture/quantize/orchestration and depends on `@xteink/optimize` (shared `prepareEpub` front half, pure path/filename helpers) and `@xteink/xtc` (planes plus the new bitmap-book writer). EPUB-mode bytes stay identical; `packages/xtc` stays DOM-free and node-tested.
 
@@ -1641,7 +1641,7 @@ git commit -m "feat(pipeline): build self-contained documents and measure page c
 
 ---
 
-### Task 7: Page capture (browser)
+### Task 7: Page capture by live-DOM painting (browser)
 
 **Files:**
 
@@ -1650,7 +1650,7 @@ git commit -m "feat(pipeline): build self-contained documents and measure page c
 **Interfaces:**
 
 - Consumes: `columnSource` and `PAGE_WIDTH`/`PAGE_HEIGHT` from `./layout.ts`.
-- Produces:
+- Produces (contract unchanged by the design revision):
 
 ```ts
 export async function captureColumn(
@@ -1659,30 +1659,26 @@ export async function captureColumn(
 ): Promise<{ rgba: Uint8Array; width: number; height: number }>;
 ```
 
-`rgba` is `width * height * 4` at 480x800 (the 2x render is internal).
+The implementation paints the mounted live DOM (see the revised spec Section
+7.3); `sourceHtml` is the clip window `columnSource(fragment, k, totalColumns)`
+already returns. No `foreignObject` or SVG image is involved.
 
-- [ ] **Step 1: Write the failing tests**
+- [ ] **Step 1: Write the failing painter tests**
 
-Create `packages/pipeline/test/capture.browser.test.ts`:
+Replace `packages/pipeline/test/capture.browser.test.ts` with:
 
 ```ts
 import { describe, expect, it } from 'vitest';
 import { captureColumn } from '../src/capture.ts';
 import { columnSource } from '../src/layout.ts';
 
-function redTextFragment(): string {
-	return '<style>.xtc-body { font: 160px/1 sans-serif; color: rgb(220, 0, 0); margin: 0 }</style><div class="xtc-body">X</div>';
-}
-
-function countCloseTo(
+function countNear(
 	buffer: Uint8Array,
-	width: number,
-	height: number,
 	target: [number, number, number],
 	tolerance: number
 ): number {
 	let count = 0;
-	for (let i = 0; i < width * height; i++) {
+	for (let i = 0; i < 480 * 800; i++) {
 		const offset = i * 4;
 		const distance =
 			Math.abs(buffer[offset] - target[0]) +
@@ -1693,27 +1689,58 @@ function countCloseTo(
 	return count;
 }
 
-describe('captureColumn', () => {
+function solidPngDataUrl(color: [number, number, number]): string {
+	const canvas = document.createElement('canvas');
+	canvas.width = 60;
+	canvas.height = 60;
+	const context = canvas.getContext('2d');
+	if (!context) throw new Error('no 2d canvas');
+	context.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+	context.fillRect(0, 0, 60, 60);
+	return canvas.toDataURL('image/png');
+}
+
+describe('captureColumn (DOM painter)', () => {
 	it('returns a 480x800 RGBA buffer', async () => {
-		const { rgba, width, height } = await captureColumn(columnSource(redTextFragment(), 0, 1));
+		const fragment = '<div class="xtc-body"><p>Hello</p></div>';
+		const { rgba, width, height } = await captureColumn(columnSource(fragment, 0, 1));
 		expect(width).toBe(480);
 		expect(height).toBe(800);
 		expect(rgba.length).toBe(480 * 800 * 4);
 	});
 
-	it('renders author colors into pixels', async () => {
-		const { rgba, width, height } = await captureColumn(columnSource(redTextFragment(), 0, 1));
-		// A 160px glyph of "X" on a white page covers thousands of pixels.
-		const red = countCloseTo(rgba, width, height, [220, 0, 0], 40);
+	it('paints a large red glyph', async () => {
+		const fragment =
+			'<style>.xtc-body { margin: 0 } .xtc-body p { font: 160px/1 sans-serif; color: rgb(220, 0, 0); margin: 0 }</style>' +
+			'<div class="xtc-body"><p>X</p></div>';
+		const { rgba } = await captureColumn(columnSource(fragment, 0, 1));
+		const red = countNear(rgba, [220, 0, 0], 45);
 		expect(red).toBeGreaterThan(2000);
 	});
 
-	it('downsamples a sharp 2x canvas without leaking rows', async () => {
-		const { rgba } = await captureColumn(columnSource(redTextFragment(), 0, 1));
-		const firstRow = rgba.subarray(0, 480 * 4);
-		for (let i = 0; i < 480; i++) {
-			expect(firstRow[i * 4 + 3]).toBe(255); // opaque white background
-		}
+	it('paints only the requested column', async () => {
+		const fragment =
+			'<div style="width:480px;height:800px;background-color:rgb(255,255,255)"></div>' +
+			'<div style="width:480px;height:800px;background-color:rgb(220,0,0)"></div>';
+		const first = await captureColumn(columnSource(fragment, 0, 2));
+		expect(countNear(first.rgba, [220, 0, 0], 45)).toBe(0);
+		const second = await captureColumn(columnSource(fragment, 1, 2));
+		expect(countNear(second.rgba, [220, 0, 0], 45)).toBeGreaterThan(100000);
+	});
+
+	it('paints a solid-color image at its layout rectangle', async () => {
+		const src = solidPngDataUrl([20, 80, 220]);
+		const fragment =
+			'<div class="xtc-body"><img src="' + src + '" style="width:60px;height:60px"/></div>';
+		const { rgba } = await captureColumn(columnSource(fragment, 0, 1));
+		const blue = countNear(rgba, [20, 80, 220], 30);
+		expect(blue).toBeGreaterThan(2500);
+	});
+
+	it('keeps an empty column pure white', async () => {
+		const fragment = '<div class="xtc-body"></div>';
+		const { rgba } = await captureColumn(columnSource(fragment, 0, 1));
+		expect(countNear(rgba, [255, 255, 255], 2)).toBe(480 * 800);
 	});
 });
 ```
@@ -1721,88 +1748,276 @@ describe('captureColumn', () => {
 - [ ] **Step 2: Run to verify failure**
 
 Run: `npx vitest run --project browser packages/pipeline/test/capture.browser.test.ts`
-Expected: FAIL — module missing.
+Expected: FAIL — the current experimental capture throws or returns blank
+pixels (pixel assertions fail).
 
-- [ ] **Step 3: Implement `capture.ts`**
+- [ ] **Step 3: Implement the painter**
 
-Create `packages/pipeline/src/capture.ts`:
+Replace `packages/pipeline/src/capture.ts` with:
 
 ```ts
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const XHTML_NS = 'http://www.w3.org/1999/xhtml';
+import { PAGE_HEIGHT, PAGE_WIDTH } from './layout.ts';
+
+interface FragmentLine {
+	text: string;
+	rect: DOMRect;
+}
+
+function isTransparent(color: string): boolean {
+	return (
+		color === 'transparent' || color === 'rgba(0, 0, 0, 0)' || color.startsWith('rgba(0, 0, 0, 0)')
+	);
+}
+
+function colorAlpha(color: string): number {
+	const match = /rgba\(([^)]+)\)/.exec(color);
+	if (!match) return 1;
+	const parts = match[1].split(',');
+	const alpha = Number(parts[3]?.trim());
+	return Number.isFinite(alpha) ? alpha : 1;
+}
+
+function hostOrigin(host: HTMLElement): { left: number; top: number } {
+	const rect = host.getBoundingClientRect();
+	return { left: rect.left, top: rect.top };
+}
+
+function fragmentLines(node: Text): FragmentLine[] {
+	const text = node.data;
+	if (text.length === 0) return [];
+	const range = document.createRange();
+	range.selectNodeContents(node);
+	const rects = [...range.getClientRects()];
+	if (rects.length === 0) return [];
+	const lineCount = (end: number) => {
+		range.setStart(node, 0);
+		range.setEnd(node, end);
+		return range.getClientRects().length;
+	};
+	const lines: FragmentLine[] = [];
+	let previous = 0;
+	for (let line = 1; line <= rects.length; line++) {
+		let low = previous;
+		let high = text.length;
+		while (low < high) {
+			const mid = Math.floor((low + high + 1) / 2);
+			if (lineCount(mid) > line) {
+				high = mid - 1;
+			} else {
+				low = mid;
+			}
+		}
+		lines.push({ text: text.slice(previous, low), rect: rects[line - 1] });
+		previous = low;
+	}
+	return lines;
+}
+
+function applyTextTransform(text: string, transform: string): string {
+	if (transform === 'uppercase') return text.toUpperCase();
+	if (transform === 'lowercase') return text.toLowerCase();
+	if (transform === 'capitalize') {
+		return text.replace(/(^|\s)(\S)/g, (match) => match.toUpperCase());
+	}
+	return text;
+}
+
+function paintTextNode(
+	context: CanvasRenderingContext2D,
+	node: Text,
+	host: HTMLElement,
+	scale: number,
+	origin: { left: number; top: number }
+): void {
+	const element = node.parentElement;
+	if (!element) return;
+	const style = getComputedStyle(element);
+	const fontSize = parseFloat(style.fontSize) * scale;
+	const family = style.fontFamily;
+	const italic = style.fontStyle !== 'normal' ? 'italic ' : '';
+	const contextFont = `${italic}${style.fontWeight} ${fontSize}px ${family}`;
+	context.font = contextFont;
+	const metrics = context.measureText('Mg');
+	const ascent = metrics.fontBoundingBoxAscent || metrics.actualBoundingBoxAscent;
+	const descent = metrics.fontBoundingBoxDescent || metrics.actualBoundingBoxDescent;
+	const cssLineHeight =
+		style.lineHeight === 'normal' ? 1.2 * parseFloat(style.fontSize) : parseFloat(style.lineHeight);
+	const lineHeight =
+		(Number.isFinite(cssLineHeight) ? cssLineHeight : 1.2 * parseFloat(style.fontSize)) * scale;
+	const halfLeading = Math.max(0, (lineHeight - (ascent + descent)) / 2);
+	const letterSpacing =
+		style.letterSpacing === 'normal' ? 0 : parseFloat(style.letterSpacing) * scale;
+	const transform = style.textTransform;
+	const justify = style.textAlign === 'justify';
+	const fill = style.color;
+	const decorationLine = style.textDecorationLine;
+	const decorationColor =
+		style.textDecorationColor === 'currentcolor' ? style.color : style.textDecorationColor;
+
+	for (const line of fragmentLines(node)) {
+		const x = (line.rect.left - origin.left) * scale;
+		if (x + line.rect.width * scale < 0 || x > PAGE_WIDTH * scale) continue;
+		const yTop = (line.rect.top - origin.top) * scale;
+		const baseline = yTop + halfLeading + ascent;
+		const text = applyTextTransform(line.text, transform);
+		context.textAlign = 'left';
+		context.textBaseline = 'alphabetic';
+		context.fillStyle = fill;
+		context.letterSpacing = `${letterSpacing}px`;
+		const naturalWidth = context.measureText(text).width;
+		const targetWidth = line.rect.width * scale;
+		const words = text.split(' ');
+		const gaps = words.length - 1;
+		const extraPerGap =
+			justify && gaps > 0 && naturalWidth < targetWidth - 1
+				? (targetWidth - naturalWidth) / gaps
+				: 0;
+		if (extraPerGap > 0) {
+			let cursor = x;
+			const naturalSpace = context.measureText(' ').width + extraPerGap;
+			for (let w = 0; w < words.length; w++) {
+				context.fillText(words[w], cursor, baseline);
+				cursor += context.measureText(words[w]).width + (w < gaps ? naturalSpace : 0);
+			}
+		} else {
+			context.fillText(text, x, baseline);
+		}
+		context.letterSpacing = '0px';
+		context.lineWidth = Math.max(1, fontSize * 0.06);
+		context.strokeStyle = decorationColor;
+		context.beginPath();
+		if (decorationLine.includes('line-through')) {
+			context.moveTo(x, baseline - ascent * 0.3);
+			context.lineTo(x + Math.max(targetWidth, naturalWidth), baseline - ascent * 0.3);
+		}
+		if (decorationLine.includes('underline')) {
+			context.moveTo(x, baseline + descent * 0.25);
+			context.lineTo(x + Math.max(targetWidth, naturalWidth), baseline + descent * 0.25);
+		}
+		context.stroke();
+	}
+}
+
+function elementRects(element: Element, origin: { left: number; top: number }): DOMRect[] {
+	const rects = [...element.getClientRects()];
+	return rects.map((rect) => rect);
+}
 
 export async function captureColumn(
 	sourceHtml: string,
 	scale = 2
 ): Promise<{ rgba: Uint8Array; width: number; height: number }> {
-	const cssWidth = 480;
-	const cssHeight = 800;
+	const cssWidth = PAGE_WIDTH;
+	const cssHeight = PAGE_HEIGHT;
 	const pixelWidth = cssWidth * scale;
 	const pixelHeight = cssHeight * scale;
 
-	const svg = document.createElementNS(SVG_NS, 'svg');
-	svg.setAttribute('xmlns', SVG_NS);
-	svg.setAttribute('width', String(pixelWidth));
-	svg.setAttribute('height', String(pixelHeight));
-	svg.setAttribute('viewBox', `0 0 ${cssWidth} ${cssHeight}`);
-	const foreign = document.createElementNS(SVG_NS, 'foreignObject');
-	foreign.setAttribute('xmlns', XHTML_NS);
-	foreign.setAttribute('width', String(cssWidth));
-	foreign.setAttribute('height', String(cssHeight));
-	foreign.setAttribute('x', '0');
-	foreign.setAttribute('y', '0');
-	foreign.innerHTML = sourceHtml;
-	svg.appendChild(foreign);
-
-	const xml = new XMLSerializer().serializeToString(svg);
-	const blob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
-	const url = URL.createObjectURL(blob);
+	const host = document.createElement('div');
+	host.style.cssText = `position:absolute;left:-30000px;top:0;width:${cssWidth}px;height:${cssHeight}px;overflow:hidden`;
+	host.innerHTML = sourceHtml;
+	document.body.appendChild(host);
+	const canvas = document.createElement('canvas');
+	canvas.width = pixelWidth;
+	canvas.height = pixelHeight;
+	const context = canvas.getContext('2d');
+	if (!context) throw new Error('2D canvas unavailable');
 	try {
-		const image = new Image();
-		image.decoding = 'async';
-		await new Promise<void>((resolve, reject) => {
-			image.onload = () => resolve();
-			image.onerror = () => reject(new Error('SVG capture failed to load'));
-			image.src = url;
-		});
-		const canvas = document.createElement('canvas');
-		canvas.width = cssWidth;
-		canvas.height = cssHeight;
-		const context = canvas.getContext('2d', { willReadFrequently: true });
-		if (!context) {
-			throw new Error('2D canvas unavailable');
-		}
+		await document.fonts.ready;
+		void host.offsetHeight;
+		const origin = hostOrigin(host);
 		context.fillStyle = '#ffffff';
-		context.fillRect(0, 0, cssWidth, cssHeight);
-		context.imageSmoothingEnabled = true;
-		context.imageSmoothingQuality = 'high';
-		context.drawImage(image, 0, 0, cssWidth, cssHeight);
-		const imageData = context.getImageData(0, 0, cssWidth, cssHeight);
+		context.fillRect(0, 0, pixelWidth, pixelHeight);
+		context.save();
+		context.beginPath();
+		context.rect(0, 0, pixelWidth, pixelHeight);
+		context.clip();
+
+		const elements = [...host.querySelectorAll('*')];
+		for (const element of elements) {
+			const style = getComputedStyle(element);
+			const background = style.backgroundColor;
+			if (isTransparent(background)) continue;
+			context.globalAlpha = colorAlpha(background);
+			context.fillStyle = background;
+			for (const rect of elementRects(element, origin)) {
+				if (rect.width === 0 || rect.height === 0) continue;
+				const x = (rect.left - origin.left) * scale;
+				const y = (rect.top - origin.top) * scale;
+				context.fillRect(x, y, rect.width * scale, rect.height * scale);
+			}
+			context.globalAlpha = 1;
+		}
+
+		const images = [...host.querySelectorAll('img')];
+		const decoded: Array<{ element: HTMLImageElement; image: HTMLImageElement }> = [];
+		for (const element of images) {
+			const src = element.getAttribute('src') ?? '';
+			if (!src.startsWith('data:')) continue;
+			const image = new Image();
+			image.src = src;
+			try {
+				await image.decode();
+				decoded.push({ element, image });
+			} catch {
+				// unrenderable image stays blank, mirroring layout warnings
+			}
+		}
+		for (const { element, image } of decoded) {
+			const rect = element.getBoundingClientRect();
+			const x = (rect.left - origin.left) * scale;
+			const y = (rect.top - origin.top) * scale;
+			if (rect.width > 0 && rect.height > 0) {
+				context.drawImage(image, x, y, rect.width * scale, rect.height * scale);
+			}
+		}
+
+		const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+		const textNodes: Text[] = [];
+		while (walker.nextNode()) {
+			textNodes.push(walker.currentNode as Text);
+		}
+		for (const node of textNodes) {
+			paintTextNode(context, node, host, scale, origin);
+		}
+
+		context.restore();
+		const small = document.createElement('canvas');
+		small.width = cssWidth;
+		small.height = cssHeight;
+		const smallContext = small.getContext('2d');
+		if (!smallContext) throw new Error('2D canvas unavailable');
+		smallContext.imageSmoothingEnabled = true;
+		smallContext.imageSmoothingQuality = 'high';
+		smallContext.drawImage(canvas, 0, 0, cssWidth, cssHeight);
+		const imageData = smallContext.getImageData(0, 0, cssWidth, cssHeight);
 		return { rgba: imageData.data, width: cssWidth, height: cssHeight };
 	} finally {
-		URL.revokeObjectURL(url);
+		host.remove();
 	}
 }
 ```
 
-If the color test fails because glyph coverage is lower than expected in the
-pinned Chromium build, measure the actual count once and adjust only the
-assertion floor with a comment; the important invariant is that author colors
-reach the raster, not the exact glyph area.
+Notes for the implementer:
+
+- `ctx.letterSpacing` exists on Chromium's canvas; if a version lacks it,
+  setting it throws nothing (it is a plain property assignment) and spacing
+  falls back to the font's natural tracking.
+- If the red-glyph count is below the floor, print the painted glyph's top
+  rows once and adjust the baseline formula, not the threshold.
 
 - [ ] **Step 4: Run to verify pass**
 
 Run: `npx vitest run --project browser packages/pipeline/test/capture.browser.test.ts`
-Expected: PASS.
+Expected: PASS (5 tests).
 
 - [ ] **Step 5: Full verification and commit**
 
-Run: `npm run check && npm run lint && npm run test:node`
+Run: `npx prettier --write packages/pipeline/src/capture.ts packages/pipeline/test/capture.browser.test.ts && npm run check && npm run lint && npm run test:node`
 Expected: green.
 
 ```bash
 git add packages/pipeline/src/capture.ts packages/pipeline/test/capture.browser.test.ts
-git commit -m "feat(pipeline): capture page columns through foreignObject at 2x"
+git commit -m "feat(pipeline): paint page columns from the live DOM at 2x"
 ```
 
 ---
@@ -2669,6 +2884,7 @@ Checked against the Phase 3 spec after writing:
 Two deliberate, recorded deviations from the letter of the spec, both covered
 by tests elsewhere: CSS stylesheet _embedding_ assertions live in the browser
 layout tests rather than the node css-inline tests (the node module is pure
-text), and the exact `foreignObject`/multicol byte layout is pinned by probe
-tests first because Chromium's geometry API is empirical; the public contracts
-do not change with probe outcomes.
+text), and capture is a live-DOM painter instead of `foreignObject`
+serialization because Chromium probes proved HTML never paints inside
+foreignObject in an SVG image on the pinned engine builds (revised spec
+Section 7.3). The public contracts do not change with either deviation.
