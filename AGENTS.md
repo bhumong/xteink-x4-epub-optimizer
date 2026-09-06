@@ -91,6 +91,7 @@ libsdl2-dev libssl-dev` and `pip install platformio`.
 | `packages/optimize/src/pipeline.ts`  | stage order, progress, cancellation, result                                  | yes  |
 | `packages/optimize/src/index.ts`     | package entry point                                                          | no   |
 | `packages/xtc/`                      | XTC/XTCH writer: header, metadata, chapters, page table, XTG/XTH bit packing | no   |
+| `packages/pipeline/`                 | pre-render pipeline: paginate, capture, quantize, Worker pack, orchestration | yes  |
 | `apps/web/src/`                      | Svelte 5 SPA shell and UI                                                    | yes  |
 | `apps/server/src/`                   | Hono static host; no book logic                                              | no   |
 | `tools/sim/`                         | simulator setup, guard, golden capture                                       | n/a  |
