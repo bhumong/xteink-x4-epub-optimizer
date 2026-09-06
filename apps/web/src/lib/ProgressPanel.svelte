@@ -1,12 +1,19 @@
 <script lang="ts">
-	import type { ProgressEvent } from '@xteink/optimize';
-
-	let { progress, oncancel }: { progress: ProgressEvent; oncancel: () => void } = $props();
+	let {
+		progress,
+		oncancel
+	}: {
+		progress: { percent: number; stage: string; message: string };
+		oncancel: () => void;
+	} = $props();
 	const labels: Record<string, string> = {
 		read: 'Reading',
 		images: 'Images',
 		normalize: 'Normalizing',
+		measure: 'Measuring pages',
+		render: 'Rendering pages',
 		pack: 'Packing',
+		write: 'Writing',
 		done: 'Done'
 	};
 </script>

@@ -1,8 +1,23 @@
 <script lang="ts">
-	import type { OptimizeResult, ReportEntry } from '@xteink/optimize';
-	import { baseName, formatBytes } from './format.ts';
+	import { baseName } from './format.ts';
+	import type { ReportEntry } from '@xteink/optimize';
 
-	let { result, ondownload }: { result: OptimizeResult; ondownload: () => void } = $props();
+	export interface SummaryRow {
+		label: string;
+		value: string;
+	}
+
+	let {
+		downloadLabel,
+		summary,
+		entries,
+		ondownload
+	}: {
+		downloadLabel: string;
+		summary: SummaryRow[];
+		entries: ReportEntry[];
+		ondownload: () => void;
+	} = $props();
 	let expanded = $state(false);
 
 	function groups(entries: ReportEntry[]): Map<string, ReportEntry[]> {
@@ -19,32 +34,22 @@
 
 <section class="report-panel">
 	<div class="summary">
-		<div>
-			<strong>{formatBytes(result.report.sourceBytes)}</strong>
-			<span>source</span>
-		</div>
-		<div>
-			<strong>{formatBytes(result.report.outputBytes)}</strong>
-			<span>optimized</span>
-		</div>
-		<div>
-			<strong>{result.report.imageCount}</strong>
-			<span>images</span>
-		</div>
-		<div>
-			<strong>{result.report.warningCount}</strong>
-			<span>warnings</span>
-		</div>
+		{#each summary as row (row.label)}
+			<div>
+				<strong>{row.value}</strong>
+				<span>{row.label}</span>
+			</div>
+		{/each}
 	</div>
 
-	<button type="button" class="primary" onclick={ondownload}>Download optimized EPUB</button>
+	<button type="button" class="primary" onclick={ondownload}>{downloadLabel}</button>
 	<button type="button" onclick={() => (expanded = !expanded)}>
 		{expanded ? 'Hide change log' : 'Show change log'}
 	</button>
 
 	{#if expanded}
 		<div class="log">
-			{#each [...groups(result.report.entries)] as [file, fileEntries]}
+			{#each [...groups(entries)] as [file, fileEntries]}
 				<h3>{baseName(file)}</h3>
 				<ul>
 					{#each fileEntries as item (item.code + item.message)}
