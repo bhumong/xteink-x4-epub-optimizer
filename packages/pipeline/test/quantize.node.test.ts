@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	BAYER_4,
-	blankPageBitmap,
-	lumaOf,
-	quantize1bit,
-	quantize2bit
-} from '../src/quantize.ts';
+import { BAYER_4, blankPageBitmap, lumaOf, quantize1bit, quantize2bit } from '../src/quantize.ts';
 
 function frame(
 	width: number,
@@ -98,8 +92,16 @@ describe('quantize2bit bands', () => {
 	});
 
 	it('is deterministic across identical input', () => {
-		const a = quantize2bit(frame(64, 64, (x, y) => [x * 4, y * 4, (x + y) % 256, 255]), 64, 64);
-		const b = quantize2bit(frame(64, 64, (x, y) => [x * 4, y * 4, (x + y) % 256, 255]), 64, 64);
+		const a = quantize2bit(
+			frame(64, 64, (x, y) => [x * 4, y * 4, (x + y) % 256, 255]),
+			64,
+			64
+		);
+		const b = quantize2bit(
+			frame(64, 64, (x, y) => [x * 4, y * 4, (x + y) % 256, 255]),
+			64,
+			64
+		);
 		expect(Array.from(a)).toEqual(Array.from(b));
 	});
 });

@@ -1,12 +1,14 @@
 function clean(value: string): string {
-	return value
-		.normalize('NFC')
-		// eslint-disable-next-line no-control-regex -- stripping ASCII controls is the point
-		.replace(/[\u0000-\u001f<>:"/\\|?*]/g, ' ')
-		.replace(/\s+/g, ' ')
-		.trim()
-		.replace(/^[. ]+/, '')
-		.replace(/[. ]+$/, '');
+	return (
+		value
+			.normalize('NFC')
+			// eslint-disable-next-line no-control-regex -- stripping ASCII controls is the point
+			.replace(/[\u0000-\u001f<>:"/\\|?*]/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim()
+			.replace(/^[. ]+/, '')
+			.replace(/[. ]+$/, '')
+	);
 }
 
 export function safeOutputFilename(
