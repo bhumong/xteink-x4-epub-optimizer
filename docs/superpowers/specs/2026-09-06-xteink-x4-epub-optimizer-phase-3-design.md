@@ -1,18 +1,19 @@
 # Xteink X4 EPUB Optimizer: Phase 3 Design Spec
 
-Status: ready for spec review (2026-09-06)
+Status: ready for spec review (2026-09-06); capture mechanism revised after
+approval to a live-DOM painter (2026-09-06)
 Parent spec: `docs/superpowers/specs/2026-09-03-xteink-x4-epub-optimizer-design.md`
 Phase 2 spec: `docs/superpowers/specs/2026-09-06-xteink-x4-epub-optimizer-phase-2-design.md`
 
 ## 1. Goal
 
 Build the browser pre-render pipeline: paginate each normalized spine document
-at 480x800 in a hidden Chromium layout, capture every page through
-`foreignObject` rasterization at 2x with downsampling, quantize each page to
-device codes in a Worker, and write a downloadable `.xtc` (1-bit) or `.xtch`
-(2-bit) container with the Phase 2 writer. The phase ships the XTC mode in the
-Svelte UI and proves one EPUB flows end to end into both output modes. Simulator
-golden-image verification stays Phase 4.
+at 480x800 in a hidden Chromium layout, paint every page from that live layout
+at 2x with downsampling, quantize each page to device codes in a Worker, and
+write a downloadable `.xtc` (1-bit) or `.xtch` (2-bit) container with the Phase
+2 writer. The phase ships the XTC mode in the Svelte UI and proves one EPUB
+flows end to end into both output modes. Simulator golden-image verification
+stays Phase 4.
 
 ## 2. Scope
 
@@ -194,7 +195,7 @@ Module responsibilities:
 | `css-inline.ts`      | rewrite external CSS and CSS `url()` references to embedded data (pure text work)       | no  |
 | `quantize.ts`        | luminance, tile classification, 1-bit/2-bit code mapping and dithering (pure byte work) | no  |
 | `layout.ts`          | self-contained per-document HTML; hidden multi-column pager; column measurement         | yes |
-| `capture.ts`         | serialize one page column, rasterize at 2x, downsample to 480x800 RGBA                  | yes |
+| `capture.ts`         | paint one page column from the live layout at 2x, downsample to 480x800 RGBA            | yes |
 | `quantize.worker.ts` | message wrapper: RGBA in, packed device bitmap out (transferable)                       | no  |
 | `pipeline.ts`        | stage orchestration, chapters/cover policy, progress, cancellation, writer call         | yes |
 | `index.ts`           | exports `preRenderXtc`, types                                                           | no  |
@@ -220,9 +221,8 @@ string before layout:
 4. Rewrite every `<img src>` to a `data:` URL from the normalized resources.
 5. Add a small baseline stylesheet that re-instates generic typographic
    defaults (paragraph margins, heading sizes, list markers, table borders) so
-   rendering does not depend on what UA defaults apply inside
-   `foreignObject`. Author CSS overrides the baseline; the Phase 1 defensive
-   rules stay in the document.
+   layout and painting do not depend on UA defaults. Author CSS overrides the
+   baseline; the Phase 1 defensive rules stay in the document.
 
 External resources that cannot be inlined (missing resource, unsupported media
 type) are dropped with a `warning` entry; the affected element then renders
@@ -231,11 +231,12 @@ without the resource. Fonts are already absent after normalization
 fonts, which is correct for pre-rendered output: the device never lays out
 these pages.
 
-The supported CSS subset is deliberately small and documented in this spec:
-inline and inlined stylesheets with color, font, margin/padding, alignment,
-decoration, borders, and layout properties Chromium applies inside
-`foreignObject`. Anything that depends on external loading does not render and
-is reported once per book as an informational entry.
+The layout CSS subset is deliberately small and documented: inline and inlined
+stylesheets with color, font, margin/padding, alignment, decoration, borders,
+and layout properties. Chromium applies the full subset during layout and
+measurement; the painter reproduces the paint subset in Section 7.3. Anything
+that depends on external loading does not render and is reported once per book
+as an informational entry.
 
 ### 7.2 Pagination
 
@@ -252,23 +253,54 @@ assert those counts. Chromium's multicol pagination is the layout engine the
 device never sees; Phase 4's oracle decides whether its _visual_ output is
 right, and Phase 3 only asserts page counts, geometry, and pixel sanity.
 
-### 7.3 Capture
+### 7.3 Capture (live-DOM painter)
+
+Rasterization cannot go through an SVG `foreignObject` image: probes against
+the pinned Chromium builds (revisions 1148 and 1243, headed and headless)
+show that HTML inside `foreignObject` never paints when the SVG is consumed as
+an image, while plain SVG paints and live `foreignObject` in the document
+paints. Capture therefore paints the page from the same live DOM layout that
+pagination uses.
 
 For page `k` of a document:
 
 1. Take the document's self-contained HTML and wrap it in a clip window showing
    column `k`: a 480x800 viewport translated left by `k * 480` CSS pixels.
-2. Serialize that window into an SVG `foreignObject` document whose canvas is
-   960x1600 (2x). Chromium rasterizes the HTML at the SVG resolution, so glyphs
-   and edges are rendered at device scale 2.
-3. Load the SVG through a blob URL into an `Image`, draw it into an
-   offscreen 480x800 canvas with smoothing on (the 2x-to-1x downsample that
-   produces antialiasing), and read `ImageData`.
-4. Transfer the RGBA buffer to the quantize Worker.
+2. Mount the window off-screen exactly as measurement does, await
+   `document.fonts.ready`, and force one synchronous layout, so painting and
+   measurement see identical geometry.
+3. Paint onto a 960x1600 (2x) canvas in three DOM-order passes, clipping to the
+   480x800 viewport:
+   - a white page base, then every element whose computed `background-color` is
+     non-transparent, filled as its clipped intersection with the viewport;
+   - every `<img>` whose data URL resolves, decoded once per document and drawn
+     clipped to its layout rectangle;
+   - every visible text line fragment (algorithm below).
+4. Downsample the 2x canvas to 480x800 with smoothing on and read `ImageData`.
+5. Transfer the RGBA buffer to the quantize Worker.
 
-One page is in flight at a time. Canvases and blob URLs are reused and revoked
-per page; nothing accumulates until the Worker returns the small packed
-bitmap.
+Text fragments come from the layout engine itself: for each text node,
+`Range.getClientRects()` returns one rectangle per visual line. The substring
+on each line is recovered by binary-searching the range end offset where the
+fragment count increments, so the engine's own wrapping defines the line
+breaks. Each substring is painted with the owner element's computed color,
+font family, size, weight, style, letter spacing, and text transform;
+underline and line-through are drawn from the computed decoration. The
+baseline comes from the fragment rectangle plus canvas font metrics, and
+justified lines get explicit word-spacing compensation (measured natural
+width distributed across word gaps) so their right edges match the layout.
+
+The v1 paint subset is intentionally small: text, element background colors,
+and raster images. Borders, gradients, shadows, `url()` backgrounds,
+float/absolute overlap ordering, RTL joining, and generated content (list
+markers, `::before`/`::after`) are not painted; generated content is reported
+once per book as an informational entry. Visual fidelity beyond this subset is
+Phase 4's oracle to measure and this painter's single responsibility to
+improve, without touching layout, quantization, or the writer.
+
+One page is in flight at a time. Canvases are reused per document and the
+mounted window is removed after each page; nothing accumulates until the
+Worker returns the small packed bitmap.
 
 ## 8. Quantization
 
@@ -347,9 +379,11 @@ contract that cover art is generated from page 0 at runtime
 
 Peak memory is bounded: one 2x RGBA page (~6 MB transient) plus the growing
 packed-bitmap list (48-96 KB/page) plus the final container in memory at write
-time. Nothing else accumulates. Blob URLs and canvas contexts are reused and
-revoked. A hidden pager root element (one shared off-screen container) is
-created per conversion, emptied between documents, and removed in `finally`.
+time. Nothing else accumulates. Decoded images are cached per document and
+the mounted page window is removed after every page; the off-screen 2x canvas
+is reused within a document. A hidden pager root element (one shared
+off-screen container) is created per conversion, emptied between documents,
+and removed in `finally`.
 
 Progress percentages:
 
@@ -428,9 +462,11 @@ warnings; the EPUB summary keeps today's fields. Download labels:
 - `packages/pipeline/test/layout.browser.test.ts`: fixture page counts are
   exact; `<title>`-based chapter names; image and stylesheet data-URL inlining
   leaves no external `src`/`href`.
-- `packages/pipeline/test/capture.browser.test.ts`: capture of a colored test
-  page yields a 480x800 RGBA buffer whose non-white pixel count is above zero
-  and whose overall bounds stay within the page; blank page fallback bytes.
+- `packages/pipeline/test/capture.browser.test.ts`: a large solid-red glyph
+  yields thousands of red pixels inside its column; a red background block in
+  column 1 paints column 1 while column 0 stays white (column isolation); a
+  60x60 solid-color PNG paints approximately its rectangle area; an empty
+  column stays pure white; all outputs are 480x800 RGBA.
 - `packages/pipeline/test/pipeline.browser.test.ts`: fixture EPUB converts to
   XTC bytes that parse through `packages/xtc`'s own writer contract; page count
   equals measure-phase count; cancellation returns nothing; encrypted fixture
@@ -509,15 +545,18 @@ Locked decisions:
   the spine; an in-spine single-page cover document becomes page 0 unlisted.
 - The pipeline accumulates packed bitmaps only; the xtc package gains the
   bitmap-book writer entry instead of holding whole-book pixel frames.
-- `foreignObject` rendering is trusted only for layout and pixel sanity in this
-  phase; visual correctness is Phase 4's oracle.
+- The live-DOM painter is trusted only for layout geometry and pixel sanity in
+  this phase; visual correctness is Phase 4's oracle. The paint subset is
+  deliberately smaller than what Chromium lays out, and unsupported features
+  are reported rather than silently assumed.
 
 Risks:
 
-| Risk                                                                   | Mitigation                                                                                                             |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Chromium multicol or `foreignObject` behavior differs from assumptions | pagination/capture browser tests fail loudly; supported CSS subset stays small and documented                          |
-| Vitest browser mode cannot host module Workers                         | quantizer tests run the pure functions in page; Worker path is covered by e2e on the built app                         |
-| UA defaults inside serialized `foreignObject` differ                   | explicit baseline stylesheet in every self-contained document                                                          |
-| Long books still hold output in memory at write time                   | packed-only accumulation; writer errors before writing; per-phase measured caps revisited if a real book shows trouble |
-| 2-bit photo quality poor without the simulator oracle                  | deterministic dithering + Phase 4 tuning loop; XTCH remains opt-in                                                     |
+| Risk                                                                  | Mitigation                                                                                                                                                 |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chromium multicol geometry or font metrics drift across engine builds | measurement asserts exact fixture page counts; painter reads live geometry, so a build change shifts pixels deterministically and fails pixel tests loudly |
+| Vitest browser mode cannot host module Workers                        | quantizer tests run the pure functions in page; Worker path is covered by e2e on the built app                                                             |
+| Painter fidelity for borders, gradients, and generated content        | v1 paint subset excludes them with informational entries; Phase 4 oracle gates any later additions                                                         |
+| Manual text painting drifts from engine glyph placement               | fragments and fonts come from the same layout; justification compensated; Phase 4 oracle is the arbiter                                                    |
+| Long books still hold output in memory at write time                  | packed-only accumulation; writer errors before writing; per-phase measured caps revisited if a real book shows trouble                                     |
+| 2-bit photo quality poor without the simulator oracle                 | deterministic dithering + Phase 4 tuning loop; XTCH remains opt-in                                                                                         |
