@@ -139,11 +139,11 @@ Expected: `guard: PASS` with both pinned submodule HEADs.
 `packages/optimize/test/types.node.test.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest";
-import { DEFAULT_OPTIONS } from "../src/options.ts";
+import { describe, expect, it } from 'vitest';
+import { DEFAULT_OPTIONS } from '../src/options.ts';
 
-describe("options", () => {
-	it("defaults to a device-safe JPEG quality and no rename", () => {
+describe('options', () => {
+	it('defaults to a device-safe JPEG quality and no rename', () => {
 		expect(DEFAULT_OPTIONS).toEqual({ jpegQuality: 85, renameFromMetadata: false });
 	});
 });
@@ -196,7 +196,7 @@ export interface EpubSource {
 	metadata: Metadata;
 }
 
-export type ReportLevel = "info" | "success" | "warning" | "error";
+export type ReportLevel = 'info' | 'success' | 'warning' | 'error';
 
 export interface ReportEntry {
 	level: ReportLevel;
@@ -224,7 +224,7 @@ export interface OptimizeResult {
 	report: OptimizeReport;
 }
 
-export type ProgressStage = "read" | "images" | "normalize" | "pack" | "done";
+export type ProgressStage = 'read' | 'images' | 'normalize' | 'pack' | 'done';
 
 export interface ProgressEvent {
 	percent: number;
@@ -249,24 +249,24 @@ export interface ImageChange {
 `packages/optimize/src/options.ts`:
 
 ```ts
-import type { OptimizeOptions } from "./types.ts";
+import type { OptimizeOptions } from './types.ts';
 
 export const JPEG_QUALITY_MIN = 50;
 export const JPEG_QUALITY_MAX = 95;
 
 export const DEFAULT_OPTIONS: OptimizeOptions = {
 	jpegQuality: 85,
-	renameFromMetadata: false,
+	renameFromMetadata: false
 };
 
 export function validateOptions(input: OptimizeOptions): OptimizeOptions {
 	const quality = Math.round(Number(input.jpegQuality));
 	if (!Number.isFinite(quality)) {
-		throw new Error("jpegQuality must be a finite number");
+		throw new Error('jpegQuality must be a finite number');
 	}
 	return {
 		jpegQuality: Math.min(JPEG_QUALITY_MAX, Math.max(JPEG_QUALITY_MIN, quality)),
-		renameFromMetadata: Boolean(input.renameFromMetadata),
+		renameFromMetadata: Boolean(input.renameFromMetadata)
 	};
 }
 ```
@@ -275,28 +275,28 @@ export function validateOptions(input: OptimizeOptions): OptimizeOptions {
 
 ```ts
 export type OptimizeErrorCode =
-	| "not-epub"
-	| "not-zip"
-	| "encrypted-book"
-	| "missing-container"
-	| "missing-opf"
-	| "empty-spine"
-	| "missing-spine-file"
-	| "parse-error"
-	| "aborted";
+	| 'not-epub'
+	| 'not-zip'
+	| 'encrypted-book'
+	| 'missing-container'
+	| 'missing-opf'
+	| 'empty-spine'
+	| 'missing-spine-file'
+	| 'parse-error'
+	| 'aborted';
 
 export class OptimizeError extends Error {
 	readonly code: OptimizeErrorCode;
 
 	constructor(code: OptimizeErrorCode, message: string) {
 		super(message);
-		this.name = "OptimizeError";
+		this.name = 'OptimizeError';
 		this.code = code;
 	}
 }
 
 export function isAbortError(error: unknown): boolean {
-	return error instanceof Error && error.name === "AbortError";
+	return error instanceof Error && error.name === 'AbortError';
 }
 ```
 
@@ -330,18 +330,18 @@ git commit -m "feat(optimize): add Phase 1 contracts, options, and errors"
 `packages/optimize/test/css.node.test.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest";
-import { stripFontFaceRules } from "../src/css.ts";
+import { describe, expect, it } from 'vitest';
+import { stripFontFaceRules } from '../src/css.ts';
 
-describe("stripFontFaceRules", () => {
-	it("removes balanced @font-face blocks", () => {
+describe('stripFontFaceRules', () => {
+	it('removes balanced @font-face blocks', () => {
 		const css =
-			"a { color: red; } @font-face { font-family: X; src: url(x.ttf); } b { color: blue; }";
+			'a { color: red; } @font-face { font-family: X; src: url(x.ttf); } b { color: blue; }';
 		const result = stripFontFaceRules(css);
 		expect(result.count).toBe(1);
-		expect(result.css).not.toContain("@font-face");
-		expect(result.css).toContain("a { color: red; }");
-		expect(result.css).toContain("b { color: blue; }");
+		expect(result.css).not.toContain('@font-face');
+		expect(result.css).toContain('a { color: red; }');
+		expect(result.css).toContain('b { color: blue; }');
 	});
 });
 ```
@@ -349,22 +349,22 @@ describe("stripFontFaceRules", () => {
 `packages/optimize/test/report.node.test.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest";
-import { createReport, renderTextReport } from "../src/report.ts";
+import { describe, expect, it } from 'vitest';
+import { createReport, renderTextReport } from '../src/report.ts';
 
-describe("report", () => {
-	it("counts warnings and renders entries", () => {
+describe('report', () => {
+	it('counts warnings and renders entries', () => {
 		const report = createReport(
 			[
-				{ level: "success", code: "image-done", message: "done", file: "a.jpg" },
-				{ level: "warning", code: "image-kept", message: "kept", file: "b.jpg" },
+				{ level: 'success', code: 'image-done', message: 'done', file: 'a.jpg' },
+				{ level: 'warning', code: 'image-kept', message: 'kept', file: 'b.jpg' }
 			],
 			1000,
-			700,
+			700
 		);
 		expect(report.warningCount).toBe(1);
 		expect(report.sourceBytes).toBe(1000);
-		expect(renderTextReport(report)).toContain("a.jpg");
+		expect(renderTextReport(report)).toContain('a.jpg');
 	});
 });
 ```
@@ -372,20 +372,20 @@ describe("report", () => {
 `packages/optimize/test/filename.node.test.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest";
-import { safeEpubFilename } from "../src/filename.ts";
+import { describe, expect, it } from 'vitest';
+import { safeEpubFilename } from '../src/filename.ts';
 
-describe("safeEpubFilename", () => {
-	it("uses title and author when rename is enabled", () => {
-		expect(safeEpubFilename("A Book", "An Author", "old.epub", true)).toBe(
-			"A Book - An Author.epub",
+describe('safeEpubFilename', () => {
+	it('uses title and author when rename is enabled', () => {
+		expect(safeEpubFilename('A Book', 'An Author', 'old.epub', true)).toBe(
+			'A Book - An Author.epub'
 		);
 	});
-	it("keeps source name when rename is disabled", () => {
-		expect(safeEpubFilename("A Book", "An Author", "old.epub", false)).toBe("old.epub");
+	it('keeps source name when rename is disabled', () => {
+		expect(safeEpubFilename('A Book', 'An Author', 'old.epub', false)).toBe('old.epub');
 	});
-	it("removes filesystem-hostile characters", () => {
-		expect(safeEpubFilename("A: B", "", "old.epub", true)).toBe("A B.epub");
+	it('removes filesystem-hostile characters', () => {
+		expect(safeEpubFilename('A: B', '', 'old.epub', true)).toBe('A B.epub');
 	});
 });
 ```
@@ -401,25 +401,25 @@ Expected: three suites fail on missing modules.
 
 ```ts
 export const DEFENSIVE_CSS =
-	"img,svg{max-width:100%;height:auto}body{overflow-wrap:break-word}" +
-	"table{max-width:100%;table-layout:fixed}pre,code{white-space:pre-wrap;word-wrap:break-word}" +
-	"*{box-sizing:border-box}";
+	'img,svg{max-width:100%;height:auto}body{overflow-wrap:break-word}' +
+	'table{max-width:100%;table-layout:fixed}pre,code{white-space:pre-wrap;word-wrap:break-word}' +
+	'*{box-sizing:border-box}';
 
 export function stripFontFaceRules(css: string): { css: string; count: number } {
-	let out = "";
+	let out = '';
 	let count = 0;
 	let i = 0;
 
 	while (i < css.length) {
-		if (css.slice(i, i + 10).toLowerCase() === "@font-face") {
+		if (css.slice(i, i + 10).toLowerCase() === '@font-face') {
 			let j = i + 10;
 			while (j < css.length && /\s/.test(css[j])) j++;
-			if (css[j] === "{") {
+			if (css[j] === '{') {
 				let depth = 0;
 				while (j < css.length) {
 					const ch = css[j];
-					if (ch === "{") depth++;
-					else if (ch === "}") depth--;
+					if (ch === '{') depth++;
+					else if (ch === '}') depth--;
 					j++;
 					if (depth === 0) break;
 				}
@@ -439,13 +439,13 @@ export function stripFontFaceRules(css: string): { css: string; count: number } 
 `packages/optimize/src/report.ts`:
 
 ```ts
-import type { OptimizeReport, ReportEntry } from "./types.ts";
+import type { OptimizeReport, ReportEntry } from './types.ts';
 
 export function entry(
-	level: ReportEntry["level"],
+	level: ReportEntry['level'],
 	code: string,
 	message: string,
-	file?: string,
+	file?: string
 ): ReportEntry {
 	return { level, code, message, file };
 }
@@ -453,13 +453,13 @@ export function entry(
 export function createReport(
 	entries: ReportEntry[],
 	sourceBytes: number,
-	outputBytes: number,
+	outputBytes: number
 ): OptimizeReport {
-	const warnings = entries.filter((item) => item.level === "warning");
-	const errors = entries.filter((item) => item.level === "error");
-	const fontRemovedCount = entries.filter((item) => item.code === "font-removed").length;
-	const scriptRemovedCount = entries.filter((item) => item.code === "script-removed").length;
-	const imageCount = entries.filter((item) => item.code === "image-encoded").length;
+	const warnings = entries.filter((item) => item.level === 'warning');
+	const errors = entries.filter((item) => item.level === 'error');
+	const fontRemovedCount = entries.filter((item) => item.code === 'font-removed').length;
+	const scriptRemovedCount = entries.filter((item) => item.code === 'script-removed').length;
+	const imageCount = entries.filter((item) => item.code === 'image-encoded').length;
 
 	return {
 		entries,
@@ -469,17 +469,17 @@ export function createReport(
 		fontRemovedCount,
 		scriptRemovedCount,
 		warningCount: warnings.length,
-		errorCount: errors.length,
+		errorCount: errors.length
 	};
 }
 
 export function renderTextReport(report: OptimizeReport): string {
 	const lines = report.entries.map((item) => {
 		const prefix = item.level.toUpperCase();
-		const file = item.file ? ` [${item.file}]` : "";
+		const file = item.file ? ` [${item.file}]` : '';
 		return `${prefix}${file}: ${item.message}`;
 	});
-	return lines.join("\n");
+	return lines.join('\n');
 }
 ```
 
@@ -490,18 +490,18 @@ export function safeEpubFilename(
 	title: string,
 	author: string,
 	sourceName: string,
-	renameFromMetadata: boolean,
+	renameFromMetadata: boolean
 ): string {
 	if (!renameFromMetadata) return sourceName;
 
 	const clean = (value: string) =>
 		value
-			.normalize("NFC")
-			.replace(/[\u0000-\u001f<>:"/\\|?*]/g, " ")
-			.replace(/\s+/g, " ")
+			.normalize('NFC')
+			.replace(/[\u0000-\u001f<>:"/\\|?*]/g, ' ')
+			.replace(/\s+/g, ' ')
 			.trim()
-			.replace(/^[. ]+/, "")
-			.replace(/[. ]+$/, "");
+			.replace(/^[. ]+/, '')
+			.replace(/[. ]+$/, '');
 
 	const safeTitle = clean(title);
 	const safeAuthor = clean(author);
@@ -512,7 +512,7 @@ export function safeEpubFilename(
 		base =
 			base
 				.slice(0, 180)
-				.replace(/\s+\S*$/, "")
+				.replace(/\s+\S*$/, '')
 				.trim() || base.slice(0, 180);
 	return `${base}.epub`;
 }
@@ -548,22 +548,22 @@ git commit -m "feat(optimize): add CSS, report, and filename helpers"
 `packages/optimize/test/repack.node.test.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest";
-import { isTextPath, repackEpub } from "../src/repack.ts";
+import { describe, expect, it } from 'vitest';
+import { isTextPath, repackEpub } from '../src/repack.ts';
 
-describe("repackEpub", () => {
-	it("writes mimetype first and stores text as deflate-compatible entries", async () => {
+describe('repackEpub', () => {
+	it('writes mimetype first and stores text as deflate-compatible entries', async () => {
 		const resources = new Map<string, Uint8Array>([
-			["mimetype", new TextEncoder().encode("application/epub+zip")],
-			["OEBPS/content.opf", new TextEncoder().encode("<package/>")],
-			["OEBPS/Images/cover.jpg", new Uint8Array([1, 2, 3])],
+			['mimetype', new TextEncoder().encode('application/epub+zip')],
+			['OEBPS/content.opf', new TextEncoder().encode('<package/>')],
+			['OEBPS/Images/cover.jpg', new Uint8Array([1, 2, 3])]
 		]);
 		const blob = await repackEpub(resources);
 		const bytes = new Uint8Array(await blob.arrayBuffer());
 		const first = new TextDecoder().decode(bytes.subarray(0, 30));
-		expect(first).toContain("mimetype");
-		expect(isTextPath("OEBPS/content.opf")).toBe(true);
-		expect(isTextPath("OEBPS/Images/cover.jpg")).toBe(false);
+		expect(first).toContain('mimetype');
+		expect(isTextPath('OEBPS/content.opf')).toBe(true);
+		expect(isTextPath('OEBPS/Images/cover.jpg')).toBe(false);
 	});
 });
 ```
@@ -578,52 +578,52 @@ Expected: FAIL, `repack.ts` not found.
 `packages/optimize/src/repack.ts`:
 
 ```ts
-import JSZip from "jszip";
+import JSZip from 'jszip';
 
 const TEXT_EXTENSIONS = new Set([
-	".xhtml",
-	".html",
-	".htm",
-	".opf",
-	".ncx",
-	".css",
-	".xml",
-	".js",
-	".txt",
-	".svg",
+	'.xhtml',
+	'.html',
+	'.htm',
+	'.opf',
+	'.ncx',
+	'.css',
+	'.xml',
+	'.js',
+	'.txt',
+	'.svg'
 ]);
 
 export function isTextPath(path: string): boolean {
 	const lower = path.toLowerCase();
-	const lastDot = lower.lastIndexOf(".");
+	const lastDot = lower.lastIndexOf('.');
 	return lastDot > 0 && TEXT_EXTENSIONS.has(lower.slice(lastDot));
 }
 
 export async function repackEpub(
 	resources: Map<string, Uint8Array>,
-	signal?: AbortSignal,
+	signal?: AbortSignal
 ): Promise<Blob> {
 	const zip = new JSZip();
-	const mimetype = resources.get("mimetype");
-	if (!mimetype) throw new Error("mimetype resource missing");
+	const mimetype = resources.get('mimetype');
+	if (!mimetype) throw new Error('mimetype resource missing');
 
-	zip.file("mimetype", mimetype, { compression: "STORE", createFolders: false });
+	zip.file('mimetype', mimetype, { compression: 'STORE', createFolders: false });
 
 	const paths = [...resources.keys()].sort((a, b) => a.localeCompare(b));
 	for (const path of paths) {
-		if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-		if (path === "mimetype") continue;
+		if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+		if (path === 'mimetype') continue;
 		const data = resources.get(path);
 		if (!data) continue;
-		const compression = isTextPath(path) ? "DEFLATE" : "STORE";
+		const compression = isTextPath(path) ? 'DEFLATE' : 'STORE';
 		zip.file(path, data, { compression, createFolders: false });
 	}
 
 	return zip.generateAsync({
-		type: "blob",
-		mimeType: "application/epub+zip",
-		compression: "DEFLATE",
-		streamFiles: true,
+		type: 'blob',
+		mimeType: 'application/epub+zip',
+		compression: 'DEFLATE',
+		streamFiles: true
 	});
 }
 ```
@@ -657,13 +657,13 @@ git commit -m "feat(optimize): add OCF repack writer"
 `fixtures/generate-epubs.mjs`:
 
 ```js
-import { deflateSync } from "node:zlib";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import JSZip from "jszip";
+import { deflateSync } from 'node:zlib';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import JSZip from 'jszip';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "epubs");
+const root = join(dirname(fileURLToPath(import.meta.url)), 'epubs');
 
 function crc32(bytes) {
 	let table = crc32.table;
@@ -681,7 +681,7 @@ function crc32(bytes) {
 }
 
 function pngChunk(type, data) {
-	const typeBytes = Buffer.from(type, "ascii");
+	const typeBytes = Buffer.from(type, 'ascii');
 	const length = Buffer.alloc(4);
 	length.writeUInt32BE(data.length);
 	const crc = Buffer.alloc(4);
@@ -711,25 +711,25 @@ function solidPng(width, height, rgb) {
 	}
 	return Buffer.concat([
 		Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-		pngChunk("IHDR", ihdr),
-		pngChunk("IDAT", deflateSync(scanlines, { level: 9 })),
-		pngChunk("IEND", Buffer.alloc(0)),
+		pngChunk('IHDR', ihdr),
+		pngChunk('IDAT', deflateSync(scanlines, { level: 9 })),
+		pngChunk('IEND', Buffer.alloc(0))
 	]);
 }
 
 async function writeEpub(name, makeZip) {
 	const zip = new JSZip();
-	zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
+	zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
 	await makeZip(zip);
 	const buffer = await zip.generateAsync({
-		type: "nodebuffer",
-		compression: "DEFLATE",
-		streamFiles: true,
+		type: 'nodebuffer',
+		compression: 'DEFLATE',
+		streamFiles: true
 	});
 	const dir = join(root, name);
 	await mkdir(dir, { recursive: true });
-	await writeFile(join(dir, "book.epub"), buffer);
-	console.log("fixture:", join(dir, "book.epub"));
+	await writeFile(join(dir, 'book.epub'), buffer);
+	console.log('fixture:', join(dir, 'book.epub'));
 }
 
 function containerXml(opfPath) {
@@ -738,89 +738,89 @@ function containerXml(opfPath) {
 
 async function makeSimpleEpub(zip, { version, title, author, content }) {
 	const isEpub3 = version === 3;
-	zip.file("META-INF/container.xml", containerXml("OEBPS/content.opf"));
+	zip.file('META-INF/container.xml', containerXml('OEBPS/content.opf'));
 	zip.file(
-		"OEBPS/content.opf",
-		`<package xmlns="http://www.idpf.org/2007/opf" version="${version}" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fixture</dc:identifier><dc:title>${title}</dc:title><dc:creator>${author}</dc:creator><dc:language>en</dc:language></metadata><manifest><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>`,
+		'OEBPS/content.opf',
+		`<package xmlns="http://www.idpf.org/2007/opf" version="${version}" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fixture</dc:identifier><dc:title>${title}</dc:title><dc:creator>${author}</dc:creator><dc:language>en</dc:language></metadata><manifest><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>`
 	);
 	zip.file(
-		"OEBPS/ch1.xhtml",
-		`<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${title}</title></head><body>${content}</body></html>`,
+		'OEBPS/ch1.xhtml',
+		`<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${title}</title></head><body>${content}</body></html>`
 	);
 	if (isEpub3) {
 		zip.file(
-			"OEBPS/nav.xhtml",
-			`<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="ch1.xhtml">${title}</a></li></ol></nav></body></html>`,
+			'OEBPS/nav.xhtml',
+			`<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body><nav epub:type="toc"><ol><li><a href="ch1.xhtml">${title}</a></li></ol></nav></body></html>`
 		);
 	}
 }
 
 async function main() {
-	await writeEpub("minimal-epub2", (zip) =>
+	await writeEpub('minimal-epub2', (zip) =>
 		makeSimpleEpub(zip, {
 			version: 2,
-			title: "Minimal Two",
-			author: "Fixture Author",
-			content: "<p>Hello two.</p>",
-		}),
+			title: 'Minimal Two',
+			author: 'Fixture Author',
+			content: '<p>Hello two.</p>'
+		})
 	);
-	await writeEpub("minimal-epub3", (zip) =>
+	await writeEpub('minimal-epub3', (zip) =>
 		makeSimpleEpub(zip, {
 			version: 3,
-			title: "Minimal Three",
-			author: "Fixture Author",
-			content: "<p>Hello three.</p>",
-		}),
+			title: 'Minimal Three',
+			author: 'Fixture Author',
+			content: '<p>Hello three.</p>'
+		})
 	);
 
 	const largePng = solidPng(960, 1600, [255, 255, 255]);
-	await writeEpub("images", async (zip) => {
-		zip.file("META-INF/container.xml", containerXml("OEBPS/content.opf"));
+	await writeEpub('images', async (zip) => {
+		zip.file('META-INF/container.xml', containerXml('OEBPS/content.opf'));
 		zip.file(
-			"OEBPS/content.opf",
-			'<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fixture</dc:identifier><dc:title>Image Book</dc:title><dc:creator>Fixture Author</dc:creator><dc:language>en</dc:language></metadata><manifest><item id="img" href="Images/large.png" media-type="image/png"/><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>',
+			'OEBPS/content.opf',
+			'<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fixture</dc:identifier><dc:title>Image Book</dc:title><dc:creator>Fixture Author</dc:creator><dc:language>en</dc:language></metadata><manifest><item id="img" href="Images/large.png" media-type="image/png"/><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>'
 		);
 		zip.file(
-			"OEBPS/ch1.xhtml",
-			'<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Image Book</title></head><body><p><img src="Images/large.png" alt="large"/></p></body></html>',
+			'OEBPS/ch1.xhtml',
+			'<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Image Book</title></head><body><p><img src="Images/large.png" alt="large"/></p></body></html>'
 		);
-		zip.file("OEBPS/Images/large.png", largePng);
+		zip.file('OEBPS/Images/large.png', largePng);
 	});
 
-	await writeEpub("fonts", async (zip) => {
+	await writeEpub('fonts', async (zip) => {
 		await makeSimpleEpub(zip, {
 			version: 3,
-			title: "Font Book",
-			author: "Fixture Author",
-			content: '<p style="font-family:X">Styled</p>',
+			title: 'Font Book',
+			author: 'Fixture Author',
+			content: '<p style="font-family:X">Styled</p>'
 		});
-		zip.file("OEBPS/font.ttf", Buffer.from("fake-font-bytes"));
+		zip.file('OEBPS/font.ttf', Buffer.from('fake-font-bytes'));
 	});
 
 	const coverPng = solidPng(480, 800, [0, 0, 0]);
-	await writeEpub("scripts-svg", async (zip) => {
-		zip.file("META-INF/container.xml", containerXml("OEBPS/content.opf"));
+	await writeEpub('scripts-svg', async (zip) => {
+		zip.file('META-INF/container.xml', containerXml('OEBPS/content.opf'));
 		zip.file(
-			"OEBPS/content.opf",
-			`<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fixture</dc:identifier><dc:title>SVG Book</dc:title><dc:creator>Fixture Author</dc:creator><dc:language>en</dc:language><meta name="cover" content="cover"/></metadata><manifest><item id="cover" href="Images/cover.png" media-type="image/png" properties="cover-image"/><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>`,
+			'OEBPS/content.opf',
+			`<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fixture</dc:identifier><dc:title>SVG Book</dc:title><dc:creator>Fixture Author</dc:creator><dc:language>en</dc:language><meta name="cover" content="cover"/></metadata><manifest><item id="cover" href="Images/cover.png" media-type="image/png" properties="cover-image"/><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>`
 		);
-		zip.file("OEBPS/Images/cover.png", coverPng);
+		zip.file('OEBPS/Images/cover.png', coverPng);
 		zip.file(
-			"OEBPS/ch1.xhtml",
-			`<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:xlink="http://www.w3.org/1999/xlink"><head><title>SVG Book</title><script>alert(1)</script></head><body onload="alert(2)"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="480" height="800"><image xlink:href="Images/cover.png" width="480" height="800"/></svg></body></html>`,
+			'OEBPS/ch1.xhtml',
+			`<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:xlink="http://www.w3.org/1999/xlink"><head><title>SVG Book</title><script>alert(1)</script></head><body onload="alert(2)"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="480" height="800"><image xlink:href="Images/cover.png" width="480" height="800"/></svg></body></html>`
 		);
 	});
 
-	await writeEpub("encrypted", async (zip) => {
+	await writeEpub('encrypted', async (zip) => {
 		await makeSimpleEpub(zip, {
 			version: 3,
-			title: "Encrypted",
-			author: "Fixture Author",
-			content: "<p>Encrypted.</p>",
+			title: 'Encrypted',
+			author: 'Fixture Author',
+			content: '<p>Encrypted.</p>'
 		});
 		zip.file(
-			"META-INF/encryption.xml",
-			'<encryption xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><EncryptedData/></encryption>',
+			'META-INF/encryption.xml',
+			'<encryption xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><EncryptedData/></encryption>'
 		);
 	});
 }
@@ -864,49 +864,49 @@ Note: the generated `scripts-svg` fixture intentionally contains no real font re
 `packages/optimize/test/ingest.browser.test.ts`:
 
 ```ts
-import JSZip from "jszip";
-import { describe, expect, it } from "vitest";
-import { ingestEpub } from "../src/ingest.ts";
+import JSZip from 'jszip';
+import { describe, expect, it } from 'vitest';
+import { ingestEpub } from '../src/ingest.ts';
 
-async function fileFromZip(zip: JSZip, name = "book.epub"): Promise<File> {
-	const blob = await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip" });
-	return new File([blob], name, { type: "application/epub+zip" });
+async function fileFromZip(zip: JSZip, name = 'book.epub'): Promise<File> {
+	const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' });
+	return new File([blob], name, { type: 'application/epub+zip' });
 }
 
 function baseZip() {
 	const zip = new JSZip();
-	zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
+	zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
 	zip.file(
-		"META-INF/container.xml",
-		'<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',
+		'META-INF/container.xml',
+		'<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'
 	);
 	return zip;
 }
 
-describe("ingestEpub", () => {
-	it("parses OPF spine and metadata", async () => {
+describe('ingestEpub', () => {
+	it('parses OPF spine and metadata', async () => {
 		const zip = baseZip();
 		zip.file(
-			"OEBPS/content.opf",
-			'<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">x</dc:identifier><dc:title>Title</dc:title><dc:creator>Author</dc:creator><dc:language>en</dc:language></metadata><manifest><item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="c1"/></spine></package>',
+			'OEBPS/content.opf',
+			'<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">x</dc:identifier><dc:title>Title</dc:title><dc:creator>Author</dc:creator><dc:language>en</dc:language></metadata><manifest><item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="c1"/></spine></package>'
 		);
 		zip.file(
-			"OEBPS/ch1.xhtml",
-			'<html xmlns="http://www.w3.org/1999/xhtml"><body>Hi</body></html>',
+			'OEBPS/ch1.xhtml',
+			'<html xmlns="http://www.w3.org/1999/xhtml"><body>Hi</body></html>'
 		);
 		const source = await ingestEpub(await fileFromZip(zip));
-		expect(source.opfPath).toBe("OEBPS/content.opf");
-		expect(source.metadata.title).toBe("Title");
-		expect(source.metadata.author).toBe("Author");
+		expect(source.opfPath).toBe('OEBPS/content.opf');
+		expect(source.metadata.title).toBe('Title');
+		expect(source.metadata.author).toBe('Author');
 		expect(source.spine).toHaveLength(1);
-		expect(source.spine[0].zipPath).toBe("OEBPS/ch1.xhtml");
+		expect(source.spine[0].zipPath).toBe('OEBPS/ch1.xhtml');
 	});
 
-	it("rejects encrypted books", async () => {
+	it('rejects encrypted books', async () => {
 		const zip = baseZip();
-		zip.file("META-INF/encryption.xml", "<encryption/>");
+		zip.file('META-INF/encryption.xml', '<encryption/>');
 		await expect(ingestEpub(await fileFromZip(zip))).rejects.toMatchObject({
-			code: "encrypted-book",
+			code: 'encrypted-book'
 		});
 	});
 });
@@ -922,60 +922,60 @@ Expected: FAIL, `ingest.ts` not found.
 `packages/optimize/src/ingest.ts`:
 
 ```ts
-import JSZip from "jszip";
-import { OptimizeError } from "./errors.ts";
-import { joinZipPath, opfDirectoryPath } from "./paths.ts";
-import type { EpubSource, ManifestItem, Metadata, SpineItem } from "./types.ts";
+import JSZip from 'jszip';
+import { OptimizeError } from './errors.ts';
+import { joinZipPath, opfDirectoryPath } from './paths.ts';
+import type { EpubSource, ManifestItem, Metadata, SpineItem } from './types.ts';
 
-export function parseXmlDocument(text: string, mimeType = "application/xml"): Document {
+export function parseXmlDocument(text: string, mimeType = 'application/xml'): Document {
 	const doc = new DOMParser().parseFromString(text, mimeType);
-	if (doc.getElementsByTagName("parsererror").length > 0) {
-		throw new OptimizeError("parse-error", "XML parsing failed");
+	if (doc.getElementsByTagName('parsererror').length > 0) {
+		throw new OptimizeError('parse-error', 'XML parsing failed');
 	}
 	return doc;
 }
 
 export function readResourceText(bytes: Uint8Array): string {
-	return new TextDecoder("utf-8", { fatal: false }).decode(bytes).replace(/^\uFEFF/, "");
+	return new TextDecoder('utf-8', { fatal: false }).decode(bytes).replace(/^\uFEFF/, '');
 }
 
 function textOf(doc: Document, localName: string): string {
-	return doc.getElementsByTagNameNS("*", localName)[0]?.textContent?.trim() ?? "";
+	return doc.getElementsByTagNameNS('*', localName)[0]?.textContent?.trim() ?? '';
 }
 
 export async function ingestEpub(file: File): Promise<EpubSource> {
-	if (!file.name.toLowerCase().endsWith(".epub")) {
-		throw new OptimizeError("not-epub", "Only .epub files are supported.");
+	if (!file.name.toLowerCase().endsWith('.epub')) {
+		throw new OptimizeError('not-epub', 'Only .epub files are supported.');
 	}
 
 	const bytes = new Uint8Array(await file.arrayBuffer());
 	if (bytes.byteLength < 4 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
-		throw new OptimizeError("not-zip", "The file is not a ZIP/EPUB container.");
+		throw new OptimizeError('not-zip', 'The file is not a ZIP/EPUB container.');
 	}
 
 	const zip = await JSZip.loadAsync(bytes);
-	if (Object.keys(zip.files).some((path) => path.toLowerCase() === "meta-inf/encryption.xml")) {
-		throw new OptimizeError("encrypted-book", "Encrypted EPUBs are not supported.");
+	if (Object.keys(zip.files).some((path) => path.toLowerCase() === 'meta-inf/encryption.xml')) {
+		throw new OptimizeError('encrypted-book', 'Encrypted EPUBs are not supported.');
 	}
 
 	const containerPath = Object.keys(zip.files).find(
-		(path) => path.toLowerCase() === "meta-inf/container.xml",
+		(path) => path.toLowerCase() === 'meta-inf/container.xml'
 	);
 	if (!containerPath)
-		throw new OptimizeError("missing-container", "META-INF/container.xml is missing.");
+		throw new OptimizeError('missing-container', 'META-INF/container.xml is missing.');
 
-	const containerXml = await zip.file(containerPath)?.async("string");
+	const containerXml = await zip.file(containerPath)?.async('string');
 	if (!containerXml)
-		throw new OptimizeError("missing-container", "META-INF/container.xml is unreadable.");
+		throw new OptimizeError('missing-container', 'META-INF/container.xml is unreadable.');
 
 	const container = parseXmlDocument(containerXml);
-	const rootfile = container.getElementsByTagNameNS("*", "rootfile")[0];
-	const opfPath = rootfile?.getAttribute("full-path");
-	if (!opfPath) throw new OptimizeError("missing-opf", "No OPF rootfile was declared.");
+	const rootfile = container.getElementsByTagNameNS('*', 'rootfile')[0];
+	const opfPath = rootfile?.getAttribute('full-path');
+	if (!opfPath) throw new OptimizeError('missing-opf', 'No OPF rootfile was declared.');
 
 	const opfFile = zip.file(opfPath);
-	if (!opfFile) throw new OptimizeError("missing-opf", `OPF not found: ${opfPath}`);
-	const opfText = await opfFile.async("string");
+	if (!opfFile) throw new OptimizeError('missing-opf', `OPF not found: ${opfPath}`);
+	const opfText = await opfFile.async('string');
 	const opf = parseXmlDocument(opfText);
 
 	const opfDir = opfDirectoryPath(opfPath);
@@ -984,61 +984,61 @@ export async function ingestEpub(file: File): Promise<EpubSource> {
 
 	for (const file of Object.values(zip.files)) {
 		if (!file.dir) {
-			const data = await file.async("uint8array");
+			const data = await file.async('uint8array');
 			resources.set(file.name, data);
 		}
 	}
 
-	const title = textOf(opf, "title");
-	const authorCandidates = [...opf.getElementsByTagNameNS("*", "creator")];
-	const author = authorCandidates[0]?.textContent?.trim() ?? "";
-	const language = textOf(opf, "language");
+	const title = textOf(opf, 'title');
+	const authorCandidates = [...opf.getElementsByTagNameNS('*', 'creator')];
+	const author = authorCandidates[0]?.textContent?.trim() ?? '';
+	const language = textOf(opf, 'language');
 
-	for (const item of [...opf.getElementsByTagNameNS("*", "item")]) {
-		const id = item.getAttribute("id") ?? "";
-		const href = item.getAttribute("href") ?? "";
+	for (const item of [...opf.getElementsByTagNameNS('*', 'item')]) {
+		const id = item.getAttribute('id') ?? '';
+		const href = item.getAttribute('href') ?? '';
 		if (!id) continue;
 		manifest.set(id, {
 			id,
 			href,
-			mediaType: item.getAttribute("media-type") ?? "",
-			zipPath: joinZipPath(opfDir, href),
+			mediaType: item.getAttribute('media-type') ?? '',
+			zipPath: joinZipPath(opfDir, href)
 		});
 	}
 
 	let coverItemId: string | undefined;
-	for (const item of [...opf.getElementsByTagNameNS("*", "item")]) {
-		const properties = item.getAttribute("properties")?.split(/\s+/).filter(Boolean) ?? [];
-		if (properties.includes("cover-image")) {
-			coverItemId = item.getAttribute("id") ?? undefined;
+	for (const item of [...opf.getElementsByTagNameNS('*', 'item')]) {
+		const properties = item.getAttribute('properties')?.split(/\s+/).filter(Boolean) ?? [];
+		if (properties.includes('cover-image')) {
+			coverItemId = item.getAttribute('id') ?? undefined;
 			break;
 		}
 	}
 	if (!coverItemId) {
-		const coverMeta = [...opf.getElementsByTagNameNS("*", "meta")].find(
-			(meta) => meta.getAttribute("name")?.toLowerCase() === "cover",
+		const coverMeta = [...opf.getElementsByTagNameNS('*', 'meta')].find(
+			(meta) => meta.getAttribute('name')?.toLowerCase() === 'cover'
 		);
-		coverItemId = coverMeta?.getAttribute("content") ?? undefined;
+		coverItemId = coverMeta?.getAttribute('content') ?? undefined;
 	}
 
 	const metadata: Metadata = { title, author, language, coverItemId };
 	const spine: SpineItem[] = [];
-	for (const itemref of [...opf.getElementsByTagNameNS("*", "itemref")]) {
-		const idref = itemref.getAttribute("idref") ?? "";
+	for (const itemref of [...opf.getElementsByTagNameNS('*', 'itemref')]) {
+		const idref = itemref.getAttribute('idref') ?? '';
 		const manifestItem = manifest.get(idref);
 		if (!manifestItem) continue;
 		spine.push({
 			idref,
 			href: manifestItem.href,
-			zipPath: manifestItem.zipPath,
+			zipPath: manifestItem.zipPath
 		});
 		if (!resources.has(manifestItem.zipPath)) {
-			throw new OptimizeError("missing-spine-file", `Spine file missing: ${manifestItem.zipPath}`);
+			throw new OptimizeError('missing-spine-file', `Spine file missing: ${manifestItem.zipPath}`);
 		}
 	}
 
 	if (spine.length === 0) {
-		throw new OptimizeError("empty-spine", "The OPF spine contains no readable text resources.");
+		throw new OptimizeError('empty-spine', 'The OPF spine contains no readable text resources.');
 	}
 
 	return { opfPath, opfDir, resources, manifest, spine, metadata };
@@ -1077,23 +1077,23 @@ git commit -m "feat(optimize): parse EPUB containers through ingest"
 `packages/optimize/test/images.browser.test.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest";
-import { isRasterMediaType, optimizeRasterImage } from "../src/images.ts";
-import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "../src/types.ts";
+import { describe, expect, it } from 'vitest';
+import { isRasterMediaType, optimizeRasterImage } from '../src/images.ts';
+import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from '../src/types.ts';
 
 async function makePng(width: number, height: number): Promise<Uint8Array> {
-	const canvas = document.createElement("canvas");
+	const canvas = document.createElement('canvas');
 	canvas.width = width;
 	canvas.height = height;
-	const ctx = canvas.getContext("2d")!;
-	ctx.fillStyle = "#777777";
+	const ctx = canvas.getContext('2d')!;
+	ctx.fillStyle = '#777777';
 	ctx.fillRect(0, 0, width, height);
-	const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
+	const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'));
 	return new Uint8Array(await blob.arrayBuffer());
 }
 
-describe("image conversion", () => {
-	it("downscales a large PNG to fit 480x800 and returns a JPEG", async () => {
+describe('image conversion', () => {
+	it('downscales a large PNG to fit 480x800 and returns a JPEG', async () => {
 		const result = await optimizeRasterImage(await makePng(960, 1600), 85);
 		expect(result.width).toBeLessThanOrEqual(VIEWPORT_WIDTH);
 		expect(result.height).toBeLessThanOrEqual(VIEWPORT_HEIGHT);
@@ -1101,9 +1101,9 @@ describe("image conversion", () => {
 		expect([...header]).toEqual([0xff, 0xd8]);
 	});
 
-	it("classifies raster media types", () => {
-		expect(isRasterMediaType("image/png")).toBe(true);
-		expect(isRasterMediaType("image/svg+xml")).toBe(false);
+	it('classifies raster media types', () => {
+		expect(isRasterMediaType('image/png')).toBe(true);
+		expect(isRasterMediaType('image/svg+xml')).toBe(false);
 	});
 });
 ```
@@ -1118,10 +1118,10 @@ Expected: FAIL, `images.ts` not found.
 `packages/optimize/src/images.ts`:
 
 ```ts
-import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "./types.ts";
+import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from './types.ts';
 
-const RASTER_PREFIX = "image/";
-const NON_RASTER = new Set(["image/svg+xml"]);
+const RASTER_PREFIX = 'image/';
+const NON_RASTER = new Set(['image/svg+xml']);
 
 export function isRasterMediaType(mediaType: string): boolean {
 	return mediaType.startsWith(RASTER_PREFIX) && !NON_RASTER.has(mediaType.toLowerCase());
@@ -1132,7 +1132,7 @@ function canvasToJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Uint8
 		canvas.toBlob(
 			(blob) => {
 				if (!blob) {
-					reject(new Error("JPEG encoding returned no blob"));
+					reject(new Error('JPEG encoding returned no blob'));
 					return;
 				}
 				blob
@@ -1140,32 +1140,32 @@ function canvasToJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Uint8
 					.then((buffer) => resolve(new Uint8Array(buffer)))
 					.catch(reject);
 			},
-			"image/jpeg",
-			quality / 100,
+			'image/jpeg',
+			quality / 100
 		);
 	});
 }
 
 export async function optimizeRasterImage(
 	data: Uint8Array,
-	jpegQuality: number,
+	jpegQuality: number
 ): Promise<{ data: Uint8Array; width: number; height: number }> {
 	const bitmap = await createImageBitmap(new Blob([data]));
 	try {
 		const scale = Math.min(1, VIEWPORT_WIDTH / bitmap.width, VIEWPORT_HEIGHT / bitmap.height);
 		const width = Math.max(1, Math.round(bitmap.width * scale));
 		const height = Math.max(1, Math.round(bitmap.height * scale));
-		const canvas = document.createElement("canvas");
+		const canvas = document.createElement('canvas');
 		canvas.width = width;
 		canvas.height = height;
-		const ctx = canvas.getContext("2d");
-		if (!ctx) throw new Error("Canvas 2D context unavailable");
+		const ctx = canvas.getContext('2d');
+		if (!ctx) throw new Error('Canvas 2D context unavailable');
 
-		ctx.fillStyle = "#ffffff";
+		ctx.fillStyle = '#ffffff';
 		ctx.fillRect(0, 0, width, height);
-		ctx.filter = "grayscale(1)";
+		ctx.filter = 'grayscale(1)';
 		ctx.imageSmoothingEnabled = true;
-		ctx.imageSmoothingQuality = "high";
+		ctx.imageSmoothingQuality = 'high';
 		ctx.drawImage(bitmap, 0, 0, width, height);
 
 		const jpeg = await canvasToJpeg(canvas, jpegQuality);
@@ -1208,44 +1208,44 @@ git commit -m "feat(optimize): downscale raster images to grayscale JPEG"
 `packages/optimize/test/normalize.browser.test.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest";
-import { normalizeOpfDocument, normalizeXhtmlDocument } from "../src/normalize.ts";
-import { DEFENSIVE_CSS } from "../src/css.ts";
+import { describe, expect, it } from 'vitest';
+import { normalizeOpfDocument, normalizeXhtmlDocument } from '../src/normalize.ts';
+import { DEFENSIVE_CSS } from '../src/css.ts';
 
-describe("normalizeXhtmlDocument", () => {
-	it("removes scripts, handlers, @font-face, and rewrites renamed images", () => {
+describe('normalizeXhtmlDocument', () => {
+	it('removes scripts, handlers, @font-face, and rewrites renamed images', () => {
 		const input = `<?xml version="1.0"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:xlink="http://www.w3.org/1999/xlink"><head><script>alert(1)</script><style>@font-face{font-family:X;src:url(font.ttf)}</style></head><body onclick="alert(2)"><img src="Images/old.png"/></body></html>`;
-		const map = new Map([["OEBPS/Images/old.png", "OEBPS/Images/old.jpg"]]);
-		const result = normalizeXhtmlDocument(input, "OEBPS/ch1.xhtml", map);
-		expect(result.html).not.toContain("<script");
-		expect(result.html).not.toContain("onclick");
-		expect(result.html).not.toContain("@font-face");
+		const map = new Map([['OEBPS/Images/old.png', 'OEBPS/Images/old.jpg']]);
+		const result = normalizeXhtmlDocument(input, 'OEBPS/ch1.xhtml', map);
+		expect(result.html).not.toContain('<script');
+		expect(result.html).not.toContain('onclick');
+		expect(result.html).not.toContain('@font-face');
 		expect(result.html).toContain('src="Images/old.jpg"');
 		expect(result.html).toContain(DEFENSIVE_CSS);
 		expect(result.removedScripts).toBe(1);
 		expect(result.removedFontFaces).toBe(1);
 	});
 
-	it("unwraps SVG image wrappers", () => {
+	it('unwraps SVG image wrappers', () => {
 		const input =
 			'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xlink="http://www.w3.org/1999/xlink"><body><svg width="480" height="800"><image xlink:href="cover.png"/></svg></body></html>';
-		const result = normalizeXhtmlDocument(input, "OEBPS/cover.xhtml", new Map());
-		expect(result.html).not.toContain("<svg");
-		expect(result.html).toContain("<img");
+		const result = normalizeXhtmlDocument(input, 'OEBPS/cover.xhtml', new Map());
+		expect(result.html).not.toContain('<svg');
+		expect(result.html).toContain('<img');
 		expect(result.svgImages).toBe(1);
 	});
 });
 
-describe("normalizeOpfDocument", () => {
-	it("rewrites image hrefs and removes fonts", () => {
+describe('normalizeOpfDocument', () => {
+	it('rewrites image hrefs and removes fonts', () => {
 		const opf =
 			'<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest><item id="i" href="Images/a.png" media-type="image/png"/><item id="f" href="font.ttf" media-type="application/vnd.ms-opentype"/></manifest><spine/></package>';
-		const map = new Map([["OEBPS/Images/a.png", "OEBPS/Images/a.jpg"]]);
-		const out = normalizeOpfDocument(opf, "OEBPS/", map, new Set(["OEBPS/font.ttf"]));
-		expect(out).toContain("Images/a.jpg");
-		expect(out).toContain("image/jpeg");
-		expect(out).not.toContain("font.ttf");
+		const map = new Map([['OEBPS/Images/a.png', 'OEBPS/Images/a.jpg']]);
+		const out = normalizeOpfDocument(opf, 'OEBPS/', map, new Set(['OEBPS/font.ttf']));
+		expect(out).toContain('Images/a.jpg');
+		expect(out).toContain('image/jpeg');
+		expect(out).not.toContain('font.ttf');
 	});
 });
 ```
@@ -1260,13 +1260,13 @@ Expected: FAIL, `normalize.ts` not found.
 `packages/optimize/src/normalize.ts`:
 
 ```ts
-import { DEFENSIVE_CSS, stripFontFaceRules } from "./css.ts";
-import { parseXmlDocument } from "./ingest.ts";
-import { joinZipPath, relativeZipPath } from "./paths.ts";
+import { DEFENSIVE_CSS, stripFontFaceRules } from './css.ts';
+import { parseXmlDocument } from './ingest.ts';
+import { joinZipPath, relativeZipPath } from './paths.ts';
 
-const XHTML_NS = "http://www.w3.org/1999/xhtml";
-const SVG_NS = "http://www.w3.org/2000/svg";
-const XLINK_NS = "http://www.w3.org/1999/xlink";
+const XHTML_NS = 'http://www.w3.org/1999/xhtml';
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
 function serialize(doc: Document): string {
 	return new XMLSerializer().serializeToString(doc);
@@ -1276,13 +1276,13 @@ function rewriteAttribute(
 	element: Element,
 	attribute: string,
 	sourceXhtmlPath: string,
-	imageRenameMap: ReadonlyMap<string, string>,
+	imageRenameMap: ReadonlyMap<string, string>
 ) {
 	const value = element.getAttribute(attribute);
-	if (!value || value.startsWith("data:")) return;
+	if (!value || value.startsWith('data:')) return;
 	const sourceZipPath = joinZipPath(
-		sourceXhtmlPath.slice(0, sourceXhtmlPath.lastIndexOf("/") + 1),
-		value,
+		sourceXhtmlPath.slice(0, sourceXhtmlPath.lastIndexOf('/') + 1),
+		value
 	);
 	const target = imageRenameMap.get(sourceZipPath);
 	if (!target) return;
@@ -1292,7 +1292,7 @@ function rewriteAttribute(
 export function normalizeXhtmlDocument(
 	html: string,
 	sourceXhtmlPath: string,
-	imageRenameMap: ReadonlyMap<string, string>,
+	imageRenameMap: ReadonlyMap<string, string>
 ): {
 	html: string;
 	removedScripts: number;
@@ -1302,22 +1302,22 @@ export function normalizeXhtmlDocument(
 } {
 	let doc: Document;
 	try {
-		doc = parseXmlDocument(html, "application/xhtml+xml");
+		doc = parseXmlDocument(html, 'application/xhtml+xml');
 	} catch {
 		return {
 			html,
 			removedScripts: 0,
 			removedHandlers: 0,
 			removedFontFaces: 0,
-			svgImages: 0,
+			svgImages: 0
 		};
 	}
 
-	const scripts = [...doc.getElementsByTagNameNS("*", "script")];
+	const scripts = [...doc.getElementsByTagNameNS('*', 'script')];
 	for (const script of scripts) script.parentNode?.removeChild(script);
 
 	let removedHandlers = 0;
-	for (const element of [...doc.getElementsByTagName("*")]) {
+	for (const element of [...doc.getElementsByTagName('*')]) {
 		for (const attribute of [...element.attributes]) {
 			if (/^on/i.test(attribute.name)) {
 				element.removeAttribute(attribute.name);
@@ -1327,8 +1327,8 @@ export function normalizeXhtmlDocument(
 	}
 
 	let removedFontFaces = 0;
-	for (const style of [...doc.getElementsByTagNameNS(XHTML_NS, "style")]) {
-		const original = style.textContent ?? "";
+	for (const style of [...doc.getElementsByTagNameNS(XHTML_NS, 'style')]) {
+		const original = style.textContent ?? '';
 		const result = stripFontFaceRules(original);
 		if (result.count > 0) {
 			style.textContent = result.css;
@@ -1336,38 +1336,38 @@ export function normalizeXhtmlDocument(
 		}
 	}
 
-	const svgs = [...doc.getElementsByTagName("svg"), ...doc.getElementsByTagNameNS(SVG_NS, "svg")];
+	const svgs = [...doc.getElementsByTagName('svg'), ...doc.getElementsByTagNameNS(SVG_NS, 'svg')];
 	let svgImages = 0;
 	for (const svg of new Set(svgs)) {
 		const image =
-			svg.getElementsByTagNameNS(SVG_NS, "image")[0] ?? svg.getElementsByTagName("image")[0];
+			svg.getElementsByTagNameNS(SVG_NS, 'image')[0] ?? svg.getElementsByTagName('image')[0];
 		if (!image) continue;
 		const href =
-			image.getAttributeNS(XLINK_NS, "href") ??
-			image.getAttribute("xlink:href") ??
-			image.getAttribute("href");
+			image.getAttributeNS(XLINK_NS, 'href') ??
+			image.getAttribute('xlink:href') ??
+			image.getAttribute('href');
 		if (!href) continue;
 
-		const img = doc.createElementNS(XHTML_NS, "img");
-		img.setAttribute("src", href);
-		img.setAttribute("alt", "");
-		img.setAttribute("style", "max-width:100%;height:auto");
-		rewriteAttribute(img, "src", sourceXhtmlPath, imageRenameMap);
+		const img = doc.createElementNS(XHTML_NS, 'img');
+		img.setAttribute('src', href);
+		img.setAttribute('alt', '');
+		img.setAttribute('style', 'max-width:100%;height:auto');
+		rewriteAttribute(img, 'src', sourceXhtmlPath, imageRenameMap);
 		svg.replaceWith(img);
 		svgImages++;
 	}
 
-	for (const element of [...doc.getElementsByTagNameNS(XHTML_NS, "img")]) {
-		rewriteAttribute(element, "src", sourceXhtmlPath, imageRenameMap);
+	for (const element of [...doc.getElementsByTagNameNS(XHTML_NS, 'img')]) {
+		rewriteAttribute(element, 'src', sourceXhtmlPath, imageRenameMap);
 	}
 
-	let head = doc.getElementsByTagNameNS(XHTML_NS, "head")[0];
+	let head = doc.getElementsByTagNameNS(XHTML_NS, 'head')[0];
 	if (!head) {
-		head = doc.createElementNS(XHTML_NS, "head");
+		head = doc.createElementNS(XHTML_NS, 'head');
 		doc.documentElement.prepend(head);
 	}
-	const style = doc.createElementNS(XHTML_NS, "style");
-	style.setAttribute("type", "text/css");
+	const style = doc.createElementNS(XHTML_NS, 'style');
+	style.setAttribute('type', 'text/css');
 	style.textContent = DEFENSIVE_CSS;
 	head.appendChild(style);
 
@@ -1376,7 +1376,7 @@ export function normalizeXhtmlDocument(
 		removedScripts: scripts.length,
 		removedHandlers,
 		removedFontFaces,
-		svgImages,
+		svgImages
 	};
 }
 
@@ -1384,22 +1384,22 @@ export function normalizeOpfDocument(
 	opfXml: string,
 	opfDir: string,
 	imageRenameMap: ReadonlyMap<string, string>,
-	fontZipPaths: ReadonlySet<string>,
+	fontZipPaths: ReadonlySet<string>
 ): string {
 	let doc: Document;
 	try {
-		doc = parseXmlDocument(opfXml, "application/xml");
+		doc = parseXmlDocument(opfXml, 'application/xml');
 	} catch {
 		return opfXml;
 	}
 
-	for (const item of [...doc.getElementsByTagNameNS("*", "item")]) {
-		const href = item.getAttribute("href") ?? "";
+	for (const item of [...doc.getElementsByTagNameNS('*', 'item')]) {
+		const href = item.getAttribute('href') ?? '';
 		const source = joinZipPath(opfDir, href);
 		const target = imageRenameMap.get(source);
 		if (target) {
-			item.setAttribute("href", relativeZipPath(opfDir, target));
-			item.setAttribute("media-type", "image/jpeg");
+			item.setAttribute('href', relativeZipPath(opfDir, target));
+			item.setAttribute('media-type', 'image/jpeg');
 		} else if (fontZipPaths.has(source)) {
 			item.parentNode?.removeChild(item);
 		}
@@ -1443,31 +1443,31 @@ git commit -m "feat(optimize): normalize XHTML and OPF for the device"
 `packages/optimize/test/pipeline.browser.test.ts`:
 
 ```ts
-import JSZip from "jszip";
-import { describe, expect, it } from "vitest";
-import { optimizeEpub } from "../src/pipeline.ts";
+import JSZip from 'jszip';
+import { describe, expect, it } from 'vitest';
+import { optimizeEpub } from '../src/pipeline.ts';
 
 async function epubFile(): Promise<File> {
 	const zip = new JSZip();
-	zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
+	zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
 	zip.file(
-		"META-INF/container.xml",
-		'<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',
+		'META-INF/container.xml',
+		'<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'
 	);
 	zip.file(
-		"OEBPS/content.opf",
-		'<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">x</dc:identifier><dc:title>Pipeline Book</dc:title><dc:creator>Fixture</dc:creator><dc:language>en</dc:language></metadata><manifest><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>',
+		'OEBPS/content.opf',
+		'<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">x</dc:identifier><dc:title>Pipeline Book</dc:title><dc:creator>Fixture</dc:creator><dc:language>en</dc:language></metadata><manifest><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>'
 	);
 	zip.file(
-		"OEBPS/ch1.xhtml",
-		'<html xmlns="http://www.w3.org/1999/xhtml"><head><script>alert(1)</script></head><body><p>Hello</p></body></html>',
+		'OEBPS/ch1.xhtml',
+		'<html xmlns="http://www.w3.org/1999/xhtml"><head><script>alert(1)</script></head><body><p>Hello</p></body></html>'
 	);
-	const blob = await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip" });
-	return new File([blob], "Pipeline Book - Fixture.epub", { type: "application/epub+zip" });
+	const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' });
+	return new File([blob], 'Pipeline Book - Fixture.epub', { type: 'application/epub+zip' });
 }
 
-describe("optimizeEpub", () => {
-	it("returns a downloadable EPUB with normalized script removed", async () => {
+describe('optimizeEpub', () => {
+	it('returns a downloadable EPUB with normalized script removed', async () => {
 		const progress: string[] = [];
 		const result = await optimizeEpub(
 			await epubFile(),
@@ -1475,20 +1475,20 @@ describe("optimizeEpub", () => {
 			{
 				onProgress(event) {
 					progress.push(`${event.stage}:${event.percent}`);
-				},
-			},
+				}
+			}
 		);
-		expect(result.fileName).toBe("Pipeline Book - Fixture.epub");
+		expect(result.fileName).toBe('Pipeline Book - Fixture.epub');
 		expect(result.report.scriptRemovedCount).toBe(1);
-		expect(progress.at(-1)).toBe("done:100");
+		expect(progress.at(-1)).toBe('done:100');
 
 		const zip = await JSZip.loadAsync(await result.blob.arrayBuffer());
-		const ch = await zip.file("OEBPS/ch1.xhtml")?.async("string");
+		const ch = await zip.file('OEBPS/ch1.xhtml')?.async('string');
 		expect(ch).toBeDefined();
-		expect(ch).not.toContain("<script");
+		expect(ch).not.toContain('<script');
 	});
 
-	it("honors an already-aborted signal", async () => {
+	it('honors an already-aborted signal', async () => {
 		const controller = new AbortController();
 		controller.abort();
 		await expect(
@@ -1496,11 +1496,11 @@ describe("optimizeEpub", () => {
 				await epubFile(),
 				{ jpegQuality: 85, renameFromMetadata: false },
 				{
-					onProgress() {},
+					onProgress() {}
 				},
-				controller.signal,
-			),
-		).rejects.toMatchObject({ name: "AbortError" });
+				controller.signal
+			)
+		).rejects.toMatchObject({ name: 'AbortError' });
 	});
 });
 ```
@@ -1515,32 +1515,32 @@ Expected: FAIL, `pipeline.ts` not found.
 `packages/optimize/src/pipeline.ts`:
 
 ```ts
-import { stripFontFaceRules } from "./css.ts";
-import { entry, createReport } from "./report.ts";
-import { safeEpubFilename } from "./filename.ts";
-import { ingestEpub, readResourceText } from "./ingest.ts";
-import { isRasterMediaType, optimizeRasterImage } from "./images.ts";
-import { normalizeOpfDocument, normalizeXhtmlDocument } from "./normalize.ts";
-import { repackEpub } from "./repack.ts";
-import { DEFAULT_OPTIONS } from "./options.ts";
+import { stripFontFaceRules } from './css.ts';
+import { entry, createReport } from './report.ts';
+import { safeEpubFilename } from './filename.ts';
+import { ingestEpub, readResourceText } from './ingest.ts';
+import { isRasterMediaType, optimizeRasterImage } from './images.ts';
+import { normalizeOpfDocument, normalizeXhtmlDocument } from './normalize.ts';
+import { repackEpub } from './repack.ts';
+import { DEFAULT_OPTIONS } from './options.ts';
 import type {
 	EpubSource,
 	OptimizeCallbacks,
 	OptimizeOptions,
 	OptimizeResult,
-	ReportEntry,
-} from "./types.ts";
+	ReportEntry
+} from './types.ts';
 
-const XHTML_EXTENSIONS = new Set([".xhtml", ".html", ".htm"]);
-const FONT_EXTENSIONS = new Set([".ttf", ".otf", ".woff", ".woff2"]);
+const XHTML_EXTENSIONS = new Set(['.xhtml', '.html', '.htm']);
+const FONT_EXTENSIONS = new Set(['.ttf', '.otf', '.woff', '.woff2']);
 
 function ext(path: string): string {
-	const dot = path.lastIndexOf(".");
-	return dot >= 0 ? path.slice(dot).toLowerCase() : "";
+	const dot = path.lastIndexOf('.');
+	return dot >= 0 ? path.slice(dot).toLowerCase() : '';
 }
 
 function throwIfAborted(signal?: AbortSignal) {
-	if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+	if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 }
 
 async function processImages(
@@ -1548,12 +1548,12 @@ async function processImages(
 	options: OptimizeOptions,
 	callbacks: OptimizeCallbacks,
 	signal: AbortSignal | undefined,
-	entries: ReportEntry[],
+	entries: ReportEntry[]
 ): Promise<{ resources: Map<string, Uint8Array>; imageRenameMap: Map<string, string> }> {
 	const resources = new Map(source.resources);
 	const imageRenameMap = new Map<string, string>();
 	const images = [...source.manifest.values()].filter(
-		(item) => isRasterMediaType(item.mediaType) && resources.has(item.zipPath),
+		(item) => isRasterMediaType(item.mediaType) && resources.has(item.zipPath)
 	);
 
 	for (let index = 0; index < images.length; index++) {
@@ -1563,22 +1563,22 @@ async function processImages(
 		const before = bytes.byteLength;
 		try {
 			const converted = await optimizeRasterImage(bytes, options.jpegQuality);
-			const target = item.zipPath.replace(/\.[^.]+$/, "") + ".jpg";
+			const target = item.zipPath.replace(/\.[^.]+$/, '') + '.jpg';
 			resources.set(target, converted.data);
 			resources.delete(item.zipPath);
 			imageRenameMap.set(item.zipPath, target);
-			entries.push(entry("success", "image-encoded", `Encoded ${item.zipPath}`, item.zipPath));
+			entries.push(entry('success', 'image-encoded', `Encoded ${item.zipPath}`, item.zipPath));
 			entries[entries.length - 1].beforeBytes = before;
 			entries[entries.length - 1].afterBytes = converted.data.byteLength;
 		} catch (error) {
 			entries.push(
-				entry("warning", "image-kept", `Kept ${item.zipPath}: ${String(error)}`, item.zipPath),
+				entry('warning', 'image-kept', `Kept ${item.zipPath}: ${String(error)}`, item.zipPath)
 			);
 		}
 		callbacks.onProgress({
 			percent: Math.round(10 + (index / Math.max(images.length, 1)) * 30),
-			stage: "images",
-			message: `Images ${index + 1}/${images.length}`,
+			stage: 'images',
+			message: `Images ${index + 1}/${images.length}`
 		});
 	}
 	return { resources, imageRenameMap };
@@ -1588,45 +1588,45 @@ export async function optimizeEpub(
 	file: File,
 	optionsInput: OptimizeOptions,
 	callbacks: OptimizeCallbacks,
-	signal?: AbortSignal,
+	signal?: AbortSignal
 ): Promise<OptimizeResult> {
 	throwIfAborted(signal);
 	const options = { ...DEFAULT_OPTIONS, ...optionsInput };
-	callbacks.onProgress({ percent: 2, stage: "read", message: "Reading EPUB" });
+	callbacks.onProgress({ percent: 2, stage: 'read', message: 'Reading EPUB' });
 	const source = await ingestEpub(file);
 	throwIfAborted(signal);
 
 	const entries: ReportEntry[] = [];
 	const sourceBytes = [...source.resources.values()].reduce(
 		(sum, bytes) => sum + bytes.byteLength,
-		0,
+		0
 	);
 	const { resources, imageRenameMap } = await processImages(
 		source,
 		options,
 		callbacks,
 		signal,
-		entries,
+		entries
 	);
 
-	callbacks.onProgress({ percent: 45, stage: "normalize", message: "Normalizing documents" });
+	callbacks.onProgress({ percent: 45, stage: 'normalize', message: 'Normalizing documents' });
 	throwIfAborted(signal);
 
 	const fontPaths = new Set([...resources.keys()].filter((path) => FONT_EXTENSIONS.has(ext(path))));
 	for (const path of fontPaths) {
 		resources.delete(path);
-		entries.push(entry("success", "font-removed", `Removed embedded font ${path}`, path));
+		entries.push(entry('success', 'font-removed', `Removed embedded font ${path}`, path));
 	}
 
 	for (const [path, bytes] of [...resources.entries()]) {
 		throwIfAborted(signal);
 		const fileExt = ext(path);
-		if (fileExt === ".css") {
+		if (fileExt === '.css') {
 			const result = stripFontFaceRules(readResourceText(bytes));
 			if (result.count > 0) {
 				resources.set(path, new TextEncoder().encode(result.css));
 				entries.push(
-					entry("success", "fontface-removed", `Removed ${result.count} @font-face rule(s)`, path),
+					entry('success', 'fontface-removed', `Removed ${result.count} @font-face rule(s)`, path)
 				);
 			}
 			continue;
@@ -1636,39 +1636,39 @@ export async function optimizeEpub(
 		const normalized = normalizeXhtmlDocument(readResourceText(bytes), path, imageRenameMap);
 		if (normalized.html === readResourceText(bytes)) {
 			entries.push(
-				entry("warning", "xhtml-parse-warn", `Preserved unparseable document ${path}`, path),
+				entry('warning', 'xhtml-parse-warn', `Preserved unparseable document ${path}`, path)
 			);
 			continue;
 		}
 		resources.set(path, new TextEncoder().encode(normalized.html));
 		if (normalized.removedScripts > 0) {
 			entries.push(
-				entry("success", "script-removed", `Removed ${normalized.removedScripts} script(s)`, path),
+				entry('success', 'script-removed', `Removed ${normalized.removedScripts} script(s)`, path)
 			);
 		}
 		if (normalized.removedHandlers > 0) {
 			entries.push(
 				entry(
-					"success",
-					"handler-removed",
+					'success',
+					'handler-removed',
 					`Removed ${normalized.removedHandlers} handler(s)`,
-					path,
-				),
+					path
+				)
 			);
 		}
 		if (normalized.removedFontFaces > 0) {
 			entries.push(
 				entry(
-					"success",
-					"fontface-removed",
+					'success',
+					'fontface-removed',
 					`Removed ${normalized.removedFontFaces} @font-face rule(s)`,
-					path,
-				),
+					path
+				)
 			);
 		}
 		if (normalized.svgImages > 0) {
 			entries.push(
-				entry("success", "svg-unwrapped", `Unwrapped ${normalized.svgImages} SVG image(s)`, path),
+				entry('success', 'svg-unwrapped', `Unwrapped ${normalized.svgImages} SVG image(s)`, path)
 			);
 		}
 	}
@@ -1679,12 +1679,12 @@ export async function optimizeEpub(
 			readResourceText(opfBytes),
 			source.opfDir,
 			imageRenameMap,
-			fontPaths,
+			fontPaths
 		);
 		resources.set(source.opfPath, new TextEncoder().encode(opfText));
 	}
 
-	callbacks.onProgress({ percent: 88, stage: "pack", message: "Packing EPUB" });
+	callbacks.onProgress({ percent: 88, stage: 'pack', message: 'Packing EPUB' });
 	const blob = await repackEpub(resources, signal);
 	const outputBytes = blob.size;
 	const report = createReport(entries, sourceBytes, outputBytes);
@@ -1692,9 +1692,9 @@ export async function optimizeEpub(
 		source.metadata.title,
 		source.metadata.author,
 		file.name,
-		options.renameFromMetadata,
+		options.renameFromMetadata
 	);
-	callbacks.onProgress({ percent: 100, stage: "done", message: "Done" });
+	callbacks.onProgress({ percent: 100, stage: 'done', message: 'Done' });
 	return { blob, fileName, report };
 }
 ```
@@ -1704,15 +1704,15 @@ export async function optimizeEpub(
 `packages/optimize/src/index.ts`:
 
 ```ts
-export * from "./paths.ts";
-export * from "./types.ts";
-export * from "./options.ts";
-export * from "./errors.ts";
-export * from "./report.ts";
-export * from "./filename.ts";
-export * from "./css.ts";
-export * from "./repack.ts";
-export { optimizeEpub } from "./pipeline.ts";
+export * from './paths.ts';
+export * from './types.ts';
+export * from './options.ts';
+export * from './errors.ts';
+export * from './report.ts';
+export * from './filename.ts';
+export * from './css.ts';
+export * from './repack.ts';
+export { optimizeEpub } from './pipeline.ts';
 ```
 
 - [ ] **Step 5: Run pipeline tests**
@@ -1753,7 +1753,10 @@ git commit -m "feat(optimize): orchestrate EPUB optimize pipeline"
 <script lang="ts">
 	import type { OptimizeOptions } from '@xteink/optimize';
 
-	let { options, onchange }: { options: OptimizeOptions; onchange: (options: OptimizeOptions) => void } = $props();
+	let {
+		options,
+		onchange
+	}: { options: OptimizeOptions; onchange: (options: OptimizeOptions) => void } = $props();
 </script>
 
 <fieldset>
@@ -1765,14 +1768,16 @@ git commit -m "feat(optimize): orchestrate EPUB optimize pipeline"
 		max="95"
 		step="1"
 		value={options.jpegQuality}
-		oninput={(e) => onchange({ ...options, jpegQuality: Number((e.target as HTMLInputElement).value) })}
+		oninput={(e) =>
+			onchange({ ...options, jpegQuality: Number((e.target as HTMLInputElement).value) })}
 	/>
 	<label class="check" for="rename">
 		<input
 			id="rename"
 			type="checkbox"
 			checked={options.renameFromMetadata}
-			onchange={(e) => onchange({ ...options, renameFromMetadata: (e.target as HTMLInputElement).checked })}
+			onchange={(e) =>
+				onchange({ ...options, renameFromMetadata: (e.target as HTMLInputElement).checked })}
 		/>
 		Rename from metadata
 	</label>
@@ -1868,7 +1873,13 @@ git commit -m "feat(optimize): orchestrate EPUB optimize pipeline"
 
 ```svelte
 <script lang="ts">
-	import { DEFAULT_OPTIONS, optimizeEpub, type OptimizeOptions, type OptimizeResult, type ProgressEvent } from '@xteink/optimize';
+	import {
+		DEFAULT_OPTIONS,
+		optimizeEpub,
+		type OptimizeOptions,
+		type OptimizeResult,
+		type ProgressEvent
+	} from '@xteink/optimize';
 	import DropZone from './lib/DropZone.svelte';
 	import OptimizeOptions from './lib/OptimizeOptions.svelte';
 	import ProgressPanel from './lib/ProgressPanel.svelte';
@@ -1893,11 +1904,16 @@ git commit -m "feat(optimize): orchestrate EPUB optimize pipeline"
 		const controller = new AbortController();
 		abortController = controller;
 		try {
-			result = await optimizeEpub(selected, options, {
-				onProgress(event) {
-					progress = event;
-				}
-			}, controller.signal);
+			result = await optimizeEpub(
+				selected,
+				options,
+				{
+					onProgress(event) {
+						progress = event;
+					}
+				},
+				controller.signal
+			);
 		} catch (err) {
 			if (err instanceof DOMException && err.name === 'AbortError') return;
 			error = err instanceof Error ? err.message : 'Conversion failed.';
@@ -1929,11 +1945,13 @@ git commit -m "feat(optimize): orchestrate EPUB optimize pipeline"
 
 <main>
 	{#if !selected}
-		<DropZone onpick={(file) => {
-			selected = file;
-			result = null;
-			error = '';
-		}} />
+		<DropZone
+			onpick={(file) => {
+				selected = file;
+				result = null;
+				error = '';
+			}}
+		/>
 	{:else}
 		<section class="panel">
 			<h2>{baseName(selected.name)}</h2>
@@ -1941,11 +1959,15 @@ git commit -m "feat(optimize): orchestrate EPUB optimize pipeline"
 			<OptimizeOptions {options} onchange={(next) => (options = next)} />
 			<div class="actions">
 				<button type="button" class="primary" disabled={running} onclick={convert}>Convert</button>
-				<button type="button" disabled={running} onclick={() => {
-					selected = null;
-					result = null;
-					error = '';
-				}}>Choose another file</button>
+				<button
+					type="button"
+					disabled={running}
+					onclick={() => {
+						selected = null;
+						result = null;
+						error = '';
+					}}>Choose another file</button
+				>
 			</div>
 		</section>
 	{/if}
@@ -2067,17 +2089,17 @@ git commit -m "feat(web): wire single-book optimize flow into Svelte UI"
 `playwright.config.ts`:
 
 ```ts
-import { defineConfig } from "@playwright/test";
+import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-	testDir: "apps/web/e2e",
-	use: { baseURL: "http://127.0.0.1:5173" },
+	testDir: 'apps/web/e2e',
+	use: { baseURL: 'http://127.0.0.1:5173' },
 	webServer: {
-		command: "npm run dev -w apps/web",
-		url: "http://127.0.0.1:5173",
+		command: 'npm run dev -w apps/web',
+		url: 'http://127.0.0.1:5173',
 		reuseExistingServer: true,
-		timeout: 30_000,
-	},
+		timeout: 30_000
+	}
 });
 ```
 
@@ -2086,27 +2108,27 @@ export default defineConfig({
 `apps/web/e2e/optimizer.spec.ts`:
 
 ```ts
-import { expect, test } from "@playwright/test";
+import { expect, test } from '@playwright/test';
 
-test("optimizes and downloads an EPUB from metadata", async ({ page }) => {
-	await page.goto("/");
-	await page.locator('input[type="file"]').setInputFiles("fixtures/epubs/minimal-epub3/book.epub");
-	await page.getByLabel("Rename from metadata").check();
-	await page.getByRole("button", { name: "Convert" }).click();
+test('optimizes and downloads an EPUB from metadata', async ({ page }) => {
+	await page.goto('/');
+	await page.locator('input[type="file"]').setInputFiles('fixtures/epubs/minimal-epub3/book.epub');
+	await page.getByLabel('Rename from metadata').check();
+	await page.getByRole('button', { name: 'Convert' }).click();
 
-	const downloadButton = page.getByRole("button", { name: "Download optimized EPUB" });
+	const downloadButton = page.getByRole('button', { name: 'Download optimized EPUB' });
 	await expect(downloadButton).toBeVisible({ timeout: 20_000 });
-	const downloadPromise = page.waitForEvent("download");
+	const downloadPromise = page.waitForEvent('download');
 	await downloadButton.click();
 	const download = await downloadPromise;
-	expect(download.suggestedFilename()).toBe("Minimal Three - Fixture Author.epub");
+	expect(download.suggestedFilename()).toBe('Minimal Three - Fixture Author.epub');
 });
 
-test("rejects an encrypted fixture with an error", async ({ page }) => {
-	await page.goto("/");
-	await page.locator('input[type="file"]').setInputFiles("fixtures/epubs/encrypted/book.epub");
-	await page.getByRole("button", { name: "Convert" }).click();
-	await expect(page.getByRole("alert")).toContainText("Encrypted", { timeout: 20_000 });
+test('rejects an encrypted fixture with an error', async ({ page }) => {
+	await page.goto('/');
+	await page.locator('input[type="file"]').setInputFiles('fixtures/epubs/encrypted/book.epub');
+	await page.getByRole('button', { name: 'Convert' }).click();
+	await expect(page.getByRole('alert')).toContainText('Encrypted', { timeout: 20_000 });
 });
 ```
 

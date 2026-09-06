@@ -71,7 +71,7 @@ type OptimizeOptions = {
 	renameFromMetadata: boolean; // default false
 };
 
-type ReportLevel = "info" | "success" | "warning" | "error";
+type ReportLevel = 'info' | 'success' | 'warning' | 'error';
 
 type ReportEntry = {
 	level: ReportLevel;
@@ -107,7 +107,7 @@ async function optimizeEpub(
 	file: File,
 	options: OptimizeOptions,
 	callbacks: OptimizeCallbacks,
-	signal?: AbortSignal,
+	signal?: AbortSignal
 ): Promise<OptimizeResult>;
 ```
 
