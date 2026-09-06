@@ -27,5 +27,24 @@
 		"sim:setup": "bash tools/sim/setup.sh",
 		"sim:build": "bash tools/sim/run.sh build",
 		"sim:run": "bash tools/sim/run.sh run"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@playwright/test": "^1.63.0",
+		"@sveltejs/vite-plugin-svelte": "^7.3.0",
+		"@types/node": "^26.4.1",
+		"@vitest/browser-playwright": "^5.0.0",
+		"eslint": "^10.10.0",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^17.12.0",
+		"playwright": "^1.63.0",
+		"prettier": "^3.9.6",
+		"prettier-plugin-svelte": "^4.1.1",
+		"svelte": "^5.57.0",
+		"svelte-check": "^4.7.6",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.69.0",
+		"vite": "^8.2.2",
+		"vitest": "^5.0.0"
 	}
 }
