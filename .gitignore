@@ -13,6 +13,8 @@ crosspoint-reader/**/platformio.local.ini
 # Local QA artifacts
 .qa/
 *.log
+test-results/
+playwright-report/
 
 .DS_Store
 Thumbs.db
