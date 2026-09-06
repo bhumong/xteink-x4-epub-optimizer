@@ -1612,7 +1612,7 @@ export function measureColumnCount(fragment: string, estimate: number): number {
 export function columnSource(fragment: string, column: number, totalColumns: number): string {
 	const width = totalColumns * PAGE_WIDTH;
 	return `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${PAGE_WIDTH}px;height:${PAGE_HEIGHT}px;overflow:hidden;background:#fff">
-		<div style="width:${width}px;height:${PAGE_HEIGHT}px;transform:translateX(-${column * PAGE_WIDTH}px);transform-origin:0 0">
+		<div style="width:${width}px;height:${PAGE_HEIGHT}px;column-width:${PAGE_WIDTH}px;column-gap:0px;transform:translateX(-${column * PAGE_WIDTH}px);transform-origin:0 0">
 		${fragment}
 		</div>
 	</div>`;
@@ -1898,9 +1898,8 @@ function paintTextNode(
 	}
 }
 
-function elementRects(element: Element, origin: { left: number; top: number }): DOMRect[] {
-	const rects = [...element.getClientRects()];
-	return rects.map((rect) => rect);
+function elementRects(element: Element): DOMRect[] {
+	return [...element.getClientRects()];
 }
 
 export async function captureColumn(
@@ -1939,7 +1938,7 @@ export async function captureColumn(
 			if (isTransparent(background)) continue;
 			context.globalAlpha = colorAlpha(background);
 			context.fillStyle = background;
-			for (const rect of elementRects(element, origin)) {
+			for (const rect of elementRects(element)) {
 				if (rect.width === 0 || rect.height === 0) continue;
 				const x = (rect.left - origin.left) * scale;
 				const y = (rect.top - origin.top) * scale;
@@ -1990,7 +1989,12 @@ export async function captureColumn(
 		smallContext.imageSmoothingQuality = 'high';
 		smallContext.drawImage(canvas, 0, 0, cssWidth, cssHeight);
 		const imageData = smallContext.getImageData(0, 0, cssWidth, cssHeight);
-		return { rgba: imageData.data, width: cssWidth, height: cssHeight };
+		const rgba = new Uint8Array(
+			imageData.data.buffer,
+			imageData.data.byteOffset,
+			imageData.data.byteLength
+		);
+		return { rgba, width: cssWidth, height: cssHeight };
 	} finally {
 		host.remove();
 	}
