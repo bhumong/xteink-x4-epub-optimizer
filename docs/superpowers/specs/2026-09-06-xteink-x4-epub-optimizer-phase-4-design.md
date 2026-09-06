@@ -144,7 +144,11 @@ pages.
 
 ## 7. CI job
 
-`phase4-oracle` runs on `ubuntu-latest` after the existing verify job passes:
+Host decision (2026-09-06, supersedes the earlier CI choice): the oracle no
+longer runs on GitHub Actions; `tools/oracle/run-oracle.sh` runs the same
+render, capture, and compare loop locally wherever the simulator program is
+available, and CI keeps only the `verify` job. The CI job design below is kept
+for reference only.
 
 1. Checkout recursive, setup Node 24, `npm ci`, install Chromium for
    Playwright.

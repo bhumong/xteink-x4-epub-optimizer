@@ -664,8 +664,10 @@ Checked against the Phase 4 spec after writing:
 Execution notes for the agent:
 
 - Local verification covers everything except simulator boot, navigation, and
-  pixel ground truth; those are CI-only by design because the host deps cannot
-  be installed in this workspace.
+  pixel ground truth. The oracle no longer runs on GitHub Actions (host
+  decision 2026-09-06): `tools/oracle/run-oracle.sh` drives the same loop
+  locally whenever a simulator program is available, and the CI oracle job was
+  removed.
 - Reference-missing runs exit 0 so the first oracle run does not redden CI,
   but every reference present in the repo is compared strictly.
 - If the render helper's spawned Vite server conflicts with an existing
