@@ -22,6 +22,7 @@
 		"test": "vitest run",
 		"test:node": "vitest run --project node",
 		"test:browser": "vitest run --project browser",
+		"test:e2e": "playwright test",
 		"guard": "bash tools/sim/guard.sh",
 		"guard:test": "bash tools/sim/test/guard_test.sh",
 		"sim:setup": "bash tools/sim/setup.sh",

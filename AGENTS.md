@@ -58,6 +58,7 @@ do. Three that have already caused design changes:
 | All tests                          | `npm test`                                                |
 | Node tests only (fast, no browser) | `npm run test:node`                                       |
 | Browser tests only                 | `npm run test:browser`                                    |
+| Browser e2e flow                   | `npm run test:e2e`                                        |
 | Typecheck                          | `npm run check`                                           |
 | Lint                               | `npm run lint`                                            |
 | Format check / write               | `npm run format` / `npm run format:write`                 |
@@ -75,17 +76,25 @@ libsdl2-dev libssl-dev` and `pip install platformio`.
 
 ## Module map
 
-| Path                                                                                | Owns                                          | DOM? |
-| ----------------------------------------------------------------------------------- | --------------------------------------------- | ---- |
-| `packages/optimize/src/paths.ts`, `decode.ts`, `css.ts`, `report.ts`, `errors.ts`   | pure transforms and helpers                   | no   |
-| `packages/optimize/src/ingest.ts`, `document.ts`, `images.ts`, `split.ts`, `toc.ts` | EPUB parse and rewrite                        | yes  |
-| `packages/optimize/src/repack.ts`                                                   | OCF-correct zip writer                        | no   |
-| `packages/optimize/src/pipeline.ts`                                                 | stage order, progress, cancellation           | yes  |
-| `packages/xtc/src/`                                                                 | XTC/XTCH writer (Phase 2; does not exist yet) | no   |
-| `apps/web/src/`                                                                     | Svelte 5 SPA shell and UI                     | yes  |
-| `apps/server/src/`                                                                  | Hono static host; no book logic               | no   |
-| `tools/sim/`                                                                        | simulator setup, guard, golden capture        | n/a  |
-| `crosspoint-reader/`                                                                | vendored firmware + simulator, read-only      | n/a  |
+| Path                                 | Owns                                          | DOM? |
+| ------------------------------------ | --------------------------------------------- | ---- |
+| `packages/optimize/src/paths.ts`     | existing OPF/path resolution helpers          | no   |
+| `packages/optimize/src/types.ts`     | shared contracts for options, report, result  | no   |
+| `packages/optimize/src/options.ts`   | `OptimizeOptions` and defaults                | no   |
+| `packages/optimize/src/errors.ts`    | typed errors and stable error codes           | no   |
+| `packages/optimize/src/report.ts`    | structured entries and summary derivation     | no   |
+| `packages/optimize/src/css.ts`       | CSS text helpers (`@font-face` removal)       | no   |
+| `packages/optimize/src/repack.ts`    | OCF-correct EPUB zip writer                   | no   |
+| `packages/optimize/src/ingest.ts`    | JSZip load, OPF/spine/manifest parse, DRM     | yes  |
+| `packages/optimize/src/images.ts`    | decode, fit 480x800, grayscale, JPEG encode   | yes  |
+| `packages/optimize/src/normalize.ts` | XHTML and OPF DOM rewrites                    | yes  |
+| `packages/optimize/src/pipeline.ts`  | stage order, progress, cancellation, result   | yes  |
+| `packages/optimize/src/index.ts`     | package entry point                           | no   |
+| `packages/xtc/src/`                  | XTC/XTCH writer (Phase 2; does not exist yet) | no   |
+| `apps/web/src/`                      | Svelte 5 SPA shell and UI                     | yes  |
+| `apps/server/src/`                   | Hono static host; no book logic               | no   |
+| `tools/sim/`                         | simulator setup, guard, golden capture        | n/a  |
+| `crosspoint-reader/`                 | vendored firmware + simulator, read-only      | n/a  |
 
 Test files route by suffix: `*.node.test.ts` runs in the cheap node project,
 `*.browser.test.ts` runs in Chromium. A test with the wrong suffix silently
