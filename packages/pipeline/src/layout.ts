@@ -130,11 +130,13 @@ function contentFits(col: HTMLElement): boolean {
 	if (rects.length === 0) return true;
 	const colTop = col.getBoundingClientRect().top;
 	const maxBottom = Math.max(...rects.map((rect) => rect.bottom - colTop));
+	const touchingBottom = rects.filter((rect) => rect.bottom - colTop >= PAGE_HEIGHT - 0.5).length;
 	// Probe result (pinned Chromium): with an 800px column height, every
 	// insufficient width leaves clipped fragments bottoming at exactly 800;
-	// a width where the last fragment bottom is below 800 means the content
-	// fit (e.g. 480-1920px -> 800, 3840px -> 530 for the probe document).
-	return maxBottom < PAGE_HEIGHT;
+	// overflow shows as many fragments touching the bottom edge, while a
+	// document ending flush at 800px has at most one (e.g. 480-1920px -> 800
+	// with many touches, 3840px -> 530 for the probe document).
+	return maxBottom <= PAGE_HEIGHT + 0.5 && (maxBottom < PAGE_HEIGHT - 0.5 || touchingBottom <= 1);
 }
 
 export function measureColumnCount(fragment: string, estimate: number): number {

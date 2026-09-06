@@ -60,6 +60,11 @@ function solidPng(width, height, rgb) {
 
 async function writeEpub(name, makeZip) {
 	const zip = new JSZip();
+	const originalFile = zip.file.bind(zip);
+	// JSZip defaults entry dates to "now", which makes every regeneration a
+	// byte-level diff. Pin one date so fixtures are reproducible.
+	zip.file = (entryName, data, options) =>
+		originalFile(entryName, data, { date: new Date('2026-09-06T00:00:00Z'), ...options });
 	zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
 	await makeZip(zip);
 	const buffer = await zip.generateAsync({
@@ -96,6 +101,15 @@ async function makeSimpleEpub(zip, { version, title, author, content }) {
 	}
 }
 
+function paragraph(index) {
+	const sentence = `Sentence ${index} of the deterministic long fixture. `.repeat(12);
+	return `<p>${sentence}</p>`;
+}
+
+function longContent() {
+	return Array.from({ length: 400 }, (_, i) => paragraph(i + 1)).join('');
+}
+
 async function main() {
 	await writeEpub('minimal-epub2', (zip) =>
 		makeSimpleEpub(zip, {
@@ -113,6 +127,33 @@ async function main() {
 			content: '<p>Hello three.</p>'
 		})
 	);
+	await writeEpub('long', (zip) =>
+		makeSimpleEpub(zip, {
+			version: 2,
+			title: 'Long Book',
+			author: 'Fixture Author',
+			content: longContent()
+		})
+	);
+	await writeEpub('cover', async (zip) => {
+		zip.file('META-INF/container.xml', containerXml('OEBPS/content.opf'));
+		zip.file(
+			'OEBPS/content.opf',
+			'<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">' +
+				'<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fixture-cover</dc:identifier>' +
+				'<dc:title>Cover Book</dc:title><dc:creator>Fixture Author</dc:creator><dc:language>en</dc:language>' +
+				'<meta name="cover" content="cover"/></metadata>' +
+				'<manifest><item id="cover" href="Images/cover.png" media-type="image/png"/>' +
+				'<item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest>' +
+				'<spine><itemref idref="ch1"/></spine></package>'
+		);
+		zip.file('OEBPS/Images/cover.png', solidPng(480, 800, [18, 52, 86]));
+		zip.file(
+			'OEBPS/ch1.xhtml',
+			'<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter One</title></head>' +
+				'<body><p>After the cover.</p></body></html>'
+		);
+	});
 
 	const largePng = solidPng(960, 1600, [255, 255, 255]);
 	await writeEpub('images', async (zip) => {
