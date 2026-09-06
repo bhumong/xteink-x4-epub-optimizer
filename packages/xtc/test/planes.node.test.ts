@@ -134,7 +134,9 @@ describe('packXth', () => {
 
 describe('unpackXth', () => {
 	it('unpacks the bit-split example back to codes', () => {
-		expect(Array.from(unpackXth(new Uint8Array([0xcc, 0xaa]), 1, 8))).toEqual([3, 2, 1, 0, 3, 2, 1, 0]);
+		expect(Array.from(unpackXth(new Uint8Array([0xcc, 0xaa]), 1, 8))).toEqual([
+			3, 2, 1, 0, 3, 2, 1, 0
+		]);
 	});
 
 	it('rejects a bitmap of the wrong length', () => {

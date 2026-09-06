@@ -134,10 +134,7 @@ export function mirrorBook(bytes: Uint8Array): MirrorBook {
 		const bitmap =
 			bitDepth === 1
 				? bytes.subarray(pageOffset + 22, pageOffset + 22 + Math.ceil(width / 8) * height)
-				: bytes.subarray(
-						pageOffset + 22,
-						pageOffset + 22 + Math.ceil((width * height) / 8) * 2
-					);
+				: bytes.subarray(pageOffset + 22, pageOffset + 22 + Math.ceil((width * height) / 8) * 2);
 		const pixels =
 			bitDepth === 1 ? decodeXtg(bitmap, width, height) : decodeXth(bitmap, width, height);
 		pages.push({ width, height, pixels });

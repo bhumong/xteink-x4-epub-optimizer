@@ -31,7 +31,12 @@ function truncateUtf8(text: string | undefined, maxBytes: number): Uint8Array {
 	return bytes.slice(0, end);
 }
 
-function writeTextField(bytes: Uint8Array, offset: number, text: string | undefined, maxBytes: number): void {
+function writeTextField(
+	bytes: Uint8Array,
+	offset: number,
+	text: string | undefined,
+	maxBytes: number
+): void {
 	const content = truncateUtf8(text, maxBytes);
 	bytes.set(content, offset);
 	// The rest of the field is already zero; one explicit NUL terminates short text.

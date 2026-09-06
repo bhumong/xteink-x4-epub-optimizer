@@ -90,9 +90,12 @@ describe('writeXtc header and layout', () => {
 			for (let b = pageOffset + 14; b < pageOffset + 22; b++) {
 				expect(bytes[b]).toBe(0); // md5
 			}
-			expect(bytesEqual(bytes.subarray(pageOffset + 22, pageOffset + 22 + 48000), packXtg(frames[i], 480, 800))).toBe(
-				true
-			);
+			expect(
+				bytesEqual(
+					bytes.subarray(pageOffset + 22, pageOffset + 22 + 48000),
+					packXtg(frames[i], 480, 800)
+				)
+			).toBe(true);
 		}
 	});
 

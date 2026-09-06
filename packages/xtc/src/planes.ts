@@ -100,7 +100,9 @@ export function unpackXth(bitmap: Uint8Array, width: number, height: number): Ui
 	const colBytes = height / 8;
 	const planeSize = width * colBytes;
 	if (bitmap.length !== 2 * planeSize) {
-		throw new Error(`bitmap length ${bitmap.length} does not match two planes of ${planeSize} bytes`);
+		throw new Error(
+			`bitmap length ${bitmap.length} does not match two planes of ${planeSize} bytes`
+		);
 	}
 	const out = new Uint8Array(width * height);
 	for (let x = 0; x < width; x++) {
