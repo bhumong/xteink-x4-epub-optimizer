@@ -7,6 +7,6 @@ export default defineConfig({
 		command: 'npm run dev -w apps/web',
 		url: 'http://127.0.0.1:5173',
 		reuseExistingServer: true,
-		timeout: 30_000
+		timeout: 120_000
 	}
 });
