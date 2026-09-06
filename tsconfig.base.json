@@ -15,7 +15,9 @@
 		"noEmit": true,
 		"paths": {
 			"@xteink/optimize": ["./packages/optimize/src/index.ts"],
-			"@xteink/optimize/*": ["./packages/optimize/src/*"]
+			"@xteink/optimize/*": ["./packages/optimize/src/*"],
+			"@xteink/xtc": ["./packages/xtc/src/index.ts"],
+			"@xteink/xtc/*": ["./packages/xtc/src/*"]
 		}
 	}
 }

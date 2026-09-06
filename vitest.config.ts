@@ -5,11 +5,14 @@ import { defineConfig } from 'vitest/config';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const optimize = root + 'packages/optimize/src';
+const xtc = root + 'packages/xtc/src';
 // Regex, not string keys: Vite treats a string alias key as a prefix match, so
 // '@xteink/optimize/paths.ts' would otherwise rewrite to '.../src/index.ts/paths.ts'.
 const alias = [
 	{ find: /^@xteink\/optimize$/, replacement: optimize + '/index.ts' },
-	{ find: /^@xteink\/optimize\//, replacement: optimize + '/' }
+	{ find: /^@xteink\/optimize\//, replacement: optimize + '/' },
+	{ find: /^@xteink\/xtc$/, replacement: xtc + '/index.ts' },
+	{ find: /^@xteink\/xtc\//, replacement: xtc + '/' }
 ];
 
 export default defineConfig({
@@ -23,6 +26,7 @@ export default defineConfig({
 					environment: 'node',
 					include: [
 						'packages/optimize/test/**/*.node.test.ts',
+						'packages/xtc/test/**/*.node.test.ts',
 						'apps/server/test/**/*.node.test.ts'
 					]
 				}
