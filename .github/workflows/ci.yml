@@ -30,3 +30,68 @@ jobs:
       - run: npx playwright test
       - run: npm run guard:test
       - run: npm run guard
+  oracle:
+    name: Phase 4 golden oracle
+    runs-on: ubuntu-latest
+    needs: verify
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install simulator host deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libssl-dev xvfb
+          python3 -m pip install --user platformio
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run sim:setup
+      - run: npm run sim:build
+      - name: Render fixture books
+        run: |
+          mkdir -p tools/oracle/artifacts/books
+          node tools/oracle/render-fixture.mjs fixtures/epubs/minimal-epub3 minimal xtc tools/oracle/artifacts/books
+          node tools/oracle/render-fixture.mjs fixtures/epubs/cover cover xtc tools/oracle/artifacts/books
+          node tools/oracle/render-fixture.mjs fixtures/epubs/minimal-epub3 minimal xtch tools/oracle/artifacts/books
+          node tools/oracle/render-fixture.mjs fixtures/epubs/long long xtc tools/oracle/artifacts/books
+      - name: Capture simulator pages
+        run: |
+          set -e
+          for spec in "minimal.xtc:0" "cover.xtc:0" "cover.xtc:1" "long.xtc:0" "long.xtc:1" "minimal.xtch:0"; do
+            case_name="${spec%%:*}"
+            page="${spec##*:}"
+            mkdir -p "tools/oracle/artifacts/books"
+            mkdir -p "tools/oracle/artifacts/sd-$case_name/books"
+            cp "tools/oracle/artifacts/books/$case_name" "tools/oracle/artifacts/sd-$case_name/books/$case_name"
+            tools/sim/capture.sh "$case_name" "$page" "tools/oracle/artifacts/captures/$case_name-p$page.bmp" "tools/oracle/artifacts/sd-$case_name/books"
+          done
+      - name: Compare with references
+        run: |
+          set -e
+          for spec in "minimal.xtc:0" "cover.xtc:0" "cover.xtc:1" "long.xtc:0" "long.xtc:1" "minimal.xtch:0"; do
+            case_name="${spec%%:*}"
+            page="${spec##*:}"
+            reference="fixtures/golden-bmps/$case_name-p$page.bmp"
+            actual="tools/oracle/artifacts/captures/$case_name-p$page.bmp"
+            if [[ ! -f "$reference" ]]; then
+              echo "REFERENCE_MISSING $reference"
+              continue
+            fi
+            node tools/oracle/compare-bmp.mjs "$reference" "$actual" \
+              --report "tools/oracle/artifacts/reports/$case_name-p$page.json"
+          done
+      - run: npm run guard
+      - name: Upload oracle artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-artifacts
+          path: tools/oracle/artifacts/**
+          if-no-files-found: ignore
