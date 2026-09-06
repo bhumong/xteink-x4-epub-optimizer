@@ -6,10 +6,7 @@ function readU16(bytes, offset) {
 
 function readU32(bytes, offset) {
 	return (
-		bytes[offset] |
-		(bytes[offset + 1] << 8) |
-		(bytes[offset + 2] << 16) |
-		(bytes[offset + 3] << 24)
+		bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)
 	);
 }
 
